@@ -1,0 +1,20 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# Compiled files
+out/
+*.class
+*.jar
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Resources (optional - uncomment if needed)
+# resources/sounds/
