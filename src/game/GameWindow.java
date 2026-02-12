@@ -2,16 +2,40 @@ package game;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 public class GameWindow extends JFrame implements KeyListener {
-    private JTextArea textArea;
+    private JTextPane textPane;
     private JScrollPane scrollPane;
     private GameEngine engine;
     private boolean isWaitingForInput;
     private InputHandler inputHandler;
+    private StyledDocument doc;
+    
+    // Estilos de texto para cores pontuais
+    private Style styleDefault;    // Branco/Cinza regular
+    private Style styleError;      // Vermelho
+    private Style styleCyan;       // Ciano (destaques/opções)
+    private Style styleYellow;     // Amarelo
+    private Style styleCursor;     // Cursor piscante
+    
+    // Esquema de cores - MS-DOS puro
+    public enum ColorScheme {
+        OS_TERMINAL(Color.BLACK, new Color(220, 220, 220));  // Preto + Branco/Cinza
+        
+        public Color bgColor;
+        public Color textColor;
+        
+        ColorScheme(Color bg, Color text) {
+            this.bgColor = bg;
+            this.textColor = text;
+        }
+    }
+    
+    private ColorScheme currentScheme = ColorScheme.OS_TERMINAL;
     
     public interface InputHandler {
         void onEnter();
@@ -21,46 +45,49 @@ public class GameWindow extends JFrame implements KeyListener {
     }
     
     public GameWindow() {
-        setTitle("Fundação Varguélia - Terminal 1983");
+        setTitle("Varguelia - Ella é Demais [MS-DOS 1986]");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 600);
+        setSize(900, 600);
         setLocationRelativeTo(null);
         setResizable(false);
         
         // Configurar painel principal
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(Color.BLACK);
+        mainPanel.setBackground(currentScheme.bgColor);
         mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         
-        // Configurar área de texto (terminal)
-        textArea = new JTextArea();
-        textArea.setBackground(Color.BLACK);
-        textArea.setForeground(new Color(0, 255, 70)); // Verde fosforescente
-        textArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
-        textArea.setLineWrap(true);
-        textArea.setWrapStyleWord(true);
-        textArea.setEditable(false);
-        textArea.setCaretColor(new Color(0, 255, 70));
-        textArea.setMargin(new Insets(10, 10, 10, 10));
+        // Usar JTextPane para suportar cores
+        textPane = new JTextPane();
+        textPane.setBackground(currentScheme.bgColor);
+        textPane.setForeground(currentScheme.textColor);
+        textPane.setFont(new Font("Monospaced", Font.PLAIN, 18));
+        textPane.setEditable(false);
+        textPane.setCaretColor(currentScheme.textColor);
+        textPane.setMargin(new Insets(10, 10, 10, 10));
+        
+        // Configurar StyledDocument e estilos
+        doc = textPane.getStyledDocument();
+        setupStyles();
         
         // Scroll
-        scrollPane = new JScrollPane(textArea);
-        scrollPane.setBackground(Color.BLACK);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(0, 255, 70), 2));
+        scrollPane = new JScrollPane(textPane);
+        scrollPane.setBackground(currentScheme.bgColor);
+        scrollPane.setBorder(BorderFactory.createLineBorder(currentScheme.textColor, 1));
+        scrollPane.getViewport().setBackground(currentScheme.bgColor);
         
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         add(mainPanel);
         
-        // Listeners - Adicionar ao JFrame, não apenas ao painel
+        // KeyListeners
         this.addKeyListener(this);
         mainPanel.addKeyListener(this);
-        textArea.addKeyListener(this);
+        textPane.addKeyListener(this);
         this.setFocusable(true);
         this.setFocusTraversalKeysEnabled(false);
         
         this.isWaitingForInput = false;
         
-        // Garantir foco ao abrir a janela
+        // Garantir foco ao abrir
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowOpened(java.awt.event.WindowEvent e) {
@@ -68,6 +95,42 @@ public class GameWindow extends JFrame implements KeyListener {
                 GameWindow.this.requestFocus();
             }
         });
+    }
+    
+    /**
+     * Configura estilos de texto para cores pontuais
+     */
+    private void setupStyles() {
+        // Estilo padrão (branco/cinza)
+        styleDefault = textPane.addStyle("default", null);
+        StyleConstants.setForeground(styleDefault, currentScheme.textColor);
+        StyleConstants.setFontFamily(styleDefault, "Monospaced");
+        StyleConstants.setFontSize(styleDefault, 18);
+        
+        // Estilo erro (vermelho)
+        styleError = textPane.addStyle("error", null);
+        StyleConstants.setForeground(styleError, new Color(255, 64, 64));
+        StyleConstants.setFontFamily(styleError, "Monospaced");
+        StyleConstants.setFontSize(styleError, 18);
+        
+        // Estilo ciano (destaques, opções)
+        styleCyan = textPane.addStyle("cyan", null);
+        StyleConstants.setForeground(styleCyan, new Color(0, 255, 255));
+        StyleConstants.setFontFamily(styleCyan, "Monospaced");
+        StyleConstants.setFontSize(styleCyan, 18);
+        
+        // Estilo amarelo (mensagens especiais)
+        styleYellow = textPane.addStyle("yellow", null);
+        StyleConstants.setForeground(styleYellow, new Color(255, 255, 0));
+        StyleConstants.setFontFamily(styleYellow, "Monospaced");
+        StyleConstants.setFontSize(styleYellow, 18);
+        
+        // Estilo cursor (branco com fundo para simular cursor)
+        styleCursor = textPane.addStyle("cursor", null);
+        StyleConstants.setForeground(styleCursor, currentScheme.bgColor);
+        StyleConstants.setBackground(styleCursor, currentScheme.textColor);
+        StyleConstants.setFontFamily(styleCursor, "Monospaced");
+        StyleConstants.setFontSize(styleCursor, 18);
     }
     
     public void setEngine(GameEngine engine) {
@@ -80,18 +143,61 @@ public class GameWindow extends JFrame implements KeyListener {
         this.requestFocus();
     }
     
+    public void setColorScheme(ColorScheme scheme) {
+        this.currentScheme = scheme;
+        textPane.setBackground(scheme.bgColor);
+        textPane.setForeground(scheme.textColor);
+        textPane.setCaretColor(scheme.textColor);
+        scrollPane.setBorder(BorderFactory.createLineBorder(scheme.textColor, 1));
+        scrollPane.setBackground(scheme.bgColor);
+        scrollPane.getViewport().setBackground(scheme.bgColor);
+    }
+    
+    /**
+     * Adiciona texto com estilo padrão (branco/cinza)
+     */
     public void appendText(String text) {
-        textArea.append(text);
-        textArea.setCaretPosition(textArea.getDocument().getLength());
+        appendText(text, "default");
     }
     
+    /**
+     * Adiciona texto com estilo específico: "default", "error", "cyan", "yellow"
+     */
+    public void appendText(String text, String styleName) {
+        try {
+            Style style = textPane.getStyle(styleName);
+            if (style == null) style = styleDefault;
+            doc.insertString(doc.getLength(), text, style);
+            textPane.setCaretPosition(doc.getLength());
+        } catch (BadLocationException e) {
+            System.err.println("Erro ao adicionar texto: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Limpa todo o texto
+     */
     public void clearText() {
-        textArea.setText("");
+        try {
+            doc.remove(0, doc.getLength());
+        } catch (BadLocationException e) {
+            System.err.println("Erro ao limpar texto: " + e.getMessage());
+        }
     }
     
+    /**
+     * Define texto, limpando o anterior
+     */
     public void setText(String text) {
-        textArea.setText(text);
-        textArea.setCaretPosition(0);
+        setText(text, "default");
+    }
+    
+    /**
+     * Define texto com estilo
+     */
+    public void setText(String text, String styleName) {
+        clearText();
+        appendText(text, styleName);
     }
     
     public void setWaitingForInput(boolean waiting) {
@@ -158,18 +264,22 @@ public class GameWindow extends JFrame implements KeyListener {
     @Override
     public void keyTyped(KeyEvent e) {}
     
-    // Efeito de escrita gradual (digitação)
+    /**
+     * Efeito typewriter: texto aparece caractere por caractere
+     */
     public void typeText(String text, int delayMs) throws InterruptedException {
         clearText();
         for (char c : text.toCharArray()) {
-            appendText(String.valueOf(c));
+            appendText(String.valueOf(c), "default");
             Thread.sleep(delayMs);
         }
     }
     
-    // Efeito de glitch (corrompe texto temporariamente)
+    /**
+     * Efeito de glitch: distorce texto temporariamente
+     */
     public void glitchEffect(String originalText, int glitchDurationMs) throws InterruptedException {
-        String glitchChars = "#@*&%$!?><[]{}()";
+        String glitchChars = "#@*&%$!?><[]{}()ÄÖÜäöü";
         clearText();
         
         long startTime = System.currentTimeMillis();
@@ -182,11 +292,64 @@ public class GameWindow extends JFrame implements KeyListener {
                     glitched.append(c);
                 }
             }
-            setText(glitched.toString());
+            setText(glitched.toString(), "default");
             Thread.sleep(100);
         }
         
-        // Mostrar texto final
-        setText(originalText);
+        // Restaurar texto original
+        setText(originalText, "default");
+    }
+    
+    /**
+     * Animação de carregamento com pontos progressivos
+     */
+    public void showLoadingAnimation(String message, int durationMs) throws InterruptedException {
+        clearText();
+        int iterations = durationMs / 200;
+        for (int i = 0; i < iterations; i++) {
+            StringBuilder dots = new StringBuilder(message);
+            for (int d = 0; d < (i % 4); d++) {
+                dots.append(".");
+            }
+            setText(dots.toString(), "default");
+            Thread.sleep(200);
+        }
+        setText(message + "  [OK]", "default");
+    }
+    
+    /**
+     * Mensagem de boot com pontos e [OK]
+     */
+    public void showBootLoadingMessage(String message) throws InterruptedException {
+        for (int i = 0; i < 4; i++) {
+            StringBuilder dots = new StringBuilder("  ");
+            dots.append(message);
+            for (int d = 0; d < i; d++) {
+                dots.append(".");
+            }
+            setText(dots.toString(), "default");
+            Thread.sleep(300);
+        }
+        clearText();
+        appendText("  " + message + "  ", "default");
+        appendText("[OK]\n", "cyan");
+        Thread.sleep(200);
+    }
+    
+    /**
+     * Cursor piscante tipo DOS ao final do texto
+     */
+    public void appendCursor() throws InterruptedException {
+        appendText("_ ", "cursor");
+        Thread.sleep(300);
+        // Remover cursor (simular piscar)
+        try {
+            int len = doc.getLength();
+            if (len >= 2) {
+                doc.remove(len - 2, 2);
+            }
+        } catch (BadLocationException e) {
+            // Ignorar
+        }
     }
 }
