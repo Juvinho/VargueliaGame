@@ -10,7 +10,6 @@ public class GameWindow extends JFrame implements KeyListener {
     private JTextArea textArea;
     private JScrollPane scrollPane;
     private GameEngine engine;
-    private MenuScreen menu;
     private boolean isWaitingForInput;
     private InputHandler inputHandler;
     
@@ -52,23 +51,33 @@ public class GameWindow extends JFrame implements KeyListener {
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         add(mainPanel);
         
-        // Listeners
-        addKeyListener(this);
-        setFocusable(true);
+        // Listeners - Adicionar ao JFrame, não apenas ao painel
+        this.addKeyListener(this);
+        mainPanel.addKeyListener(this);
+        textArea.addKeyListener(this);
+        this.setFocusable(true);
+        this.setFocusTraversalKeysEnabled(false);
         
         this.isWaitingForInput = false;
+        
+        // Garantir foco ao abrir a janela
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowOpened(java.awt.event.WindowEvent e) {
+                GameWindow.this.setFocusable(true);
+                GameWindow.this.requestFocus();
+            }
+        });
     }
     
     public void setEngine(GameEngine engine) {
         this.engine = engine;
     }
     
-    public void setMenu(MenuScreen menu) {
-        this.menu = menu;
-    }
-    
     public void setInputHandler(InputHandler handler) {
         this.inputHandler = handler;
+        // Garantir foco quando coloca novo handler
+        this.requestFocus();
     }
     
     public void appendText(String text) {
@@ -95,36 +104,51 @@ public class GameWindow extends JFrame implements KeyListener {
     
     @Override
     public void keyPressed(KeyEvent e) {
-        if (inputHandler != null) {
-            // Setas
-            if (e.getKeyCode() == KeyEvent.VK_UP) {
-                inputHandler.onArrowUp();
-                return;
-            }
-            if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-                inputHandler.onArrowDown();
-                return;
-            }
+        // Debug: mostrar que tecla foi pressionada
+        // System.out.println("Key pressed: " + e.getKeyCode() + " (" + e.getKeyChar() + ")");
+        
+        // Sempre manter o foco na janela
+        if (!this.hasFocus()) {
+            this.requestFocus();
         }
         
-        if (!isWaitingForInput) return;
+        // Setas (funcionam com qualquer handler ativo)
+        if (e.getKeyCode() == KeyEvent.VK_UP) {
+            if (inputHandler != null) {
+                inputHandler.onArrowUp();
+            }
+            e.consume();
+            return;
+        }
         
-        // ENTER ou SPACE: avança o texto
+        if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            if (inputHandler != null) {
+                inputHandler.onArrowDown();
+            }
+            e.consume();
+            return;
+        }
+        
+        // ENTER ou SPACE
         if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_SPACE) {
             if (inputHandler != null) {
                 inputHandler.onEnter();
-            } else if (engine != null) {
+            } else if (engine != null && !engine.isWaitingForChoice()) {
                 engine.onAdvance();
             }
+            e.consume();
+            return;
         }
         
-        // Números 1-9: escolhem opções
+        // Números 1-9
         if (Character.isDigit(e.getKeyChar())) {
             if (inputHandler != null) {
                 inputHandler.onChoice(String.valueOf(e.getKeyChar()));
             } else if (engine != null && engine.isWaitingForChoice()) {
                 engine.onChoice(String.valueOf(e.getKeyChar()));
             }
+            e.consume();
+            return;
         }
     }
     

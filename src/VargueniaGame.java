@@ -9,7 +9,11 @@ public class VargueniaGame {
     private static GameState gameState;
     private static GameEngine gameEngine;
     private static MenuScreen menuScreen;
-    private static int currentScreen = 0; // 0 = menu, 1 = game
+    private static ApplicationState appState = ApplicationState.BOOT;
+    
+    private enum ApplicationState {
+        BOOT, MENU, GAME, PASSWORD
+    }
     
     public static void main(String[] args) {
         // Criar janela
@@ -17,21 +21,17 @@ public class VargueniaGame {
         window.setVisible(true);
         
         try {
-            // Mostrar tela de boot com verificação
+            // Mostrar tela de boot
             showBootScreen();
-            
-            // Aguardar um pouco antes de mostrar menu
-            Thread.sleep(1500);
             
             // Criar estado e menu
             gameState = new GameState();
             menuScreen = new MenuScreen(window);
-            gameEngine = new GameEngine(window, gameState);
             
-            // Mostrar menu
-            window.setMenu(menuScreen);
-            window.setInputHandler(createMenuHandler());
+            // Trocar para tela de menu
+            appState = ApplicationState.MENU;
             menuScreen.display();
+            window.setInputHandler(createMenuHandler());
             
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -40,6 +40,7 @@ public class VargueniaGame {
     
     private static void showBootScreen() throws InterruptedException {
         window.clearText();
+        appState = ApplicationState.BOOT;
         
         // Tocar som de startup
         RetroSoundGenerator.playStartupSound();
@@ -101,39 +102,15 @@ public class VargueniaGame {
         window.appendText("All systems nominal.\n");
         window.appendText("================================================\n\n");
         
-        window.appendText("Pressione ENTER para continuar...\n");
-        window.setWaitingForInput(true);
-        
-        // Aguardar ENTER
-        Object lock = new Object();
-        window.setInputHandler(new GameWindow.InputHandler() {
-            @Override
-            public void onEnter() {
-                synchronized (lock) {
-                    lock.notify();
-                }
-            }
-            @Override
-            public void onChoice(String key) {}
-            @Override
-            public void onArrowUp() {}
-            @Override
-            public void onArrowDown() {}
-        });
-        
-        synchronized (lock) {
-            try {
-                lock.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        Thread.sleep(1000);
     }
     
     private static GameWindow.InputHandler createMenuHandler() {
         return new GameWindow.InputHandler() {
             @Override
             public void onEnter() {
+                if (appState != ApplicationState.MENU) return;
+                
                 String selected = menuScreen.handleEnter();
                 
                 if (selected.equals("NOVO JOGO")) {
@@ -147,19 +124,25 @@ public class VargueniaGame {
             
             @Override
             public void onChoice(String key) {
-                String selected = menuScreen.handleNumberSelect(Integer.parseInt(key));
-                if (selected != null) {
-                    // Após selecionar com número, aguarda ENTER
+                if (appState != ApplicationState.MENU) return;
+                
+                try {
+                    String selected = menuScreen.handleNumberSelect(Integer.parseInt(key));
+                    // Apenas muda a seleção, não confirma
+                } catch (NumberFormatException e) {
+                    // Ignorar
                 }
             }
             
             @Override
             public void onArrowUp() {
+                if (appState != ApplicationState.MENU) return;
                 menuScreen.handleUpArrow();
             }
             
             @Override
             public void onArrowDown() {
+                if (appState != ApplicationState.MENU) return;
                 menuScreen.handleDownArrow();
             }
         };
@@ -169,14 +152,16 @@ public class VargueniaGame {
         RetroSoundGenerator.playBeep(1200, 100);
         
         // Iniciar jogo
-        window.setInputHandler(null);
+        appState = ApplicationState.GAME;
         gameEngine = new GameEngine(window, gameState);
         window.setEngine(gameEngine);
+        window.setInputHandler(null); // Game engine vai lidar com input
         gameEngine.showCurrentScene();
     }
     
     private static void showPasswordScreen() {
         RetroSoundGenerator.playBeep(1200, 100);
+        appState = ApplicationState.PASSWORD;
         
         window.clearText();
         window.appendText("\n");
@@ -186,16 +171,39 @@ public class VargueniaGame {
         window.appendText("Digite seu código de acesso (PASSWORD):\n\n");
         window.appendText("> ");
         
-        // TODO: Implementar leitura de password
-        // Por enquanto, voltar ao menu após um tempo
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        window.setInputHandler(createMenuHandler());
-        menuScreen.display();
+        window.setInputHandler(new GameWindow.InputHandler() {
+            private StringBuilder password = new StringBuilder();
+            
+            @Override
+            public void onEnter() {
+                if (password.toString().isEmpty()) {
+                    return;
+                }
+                
+                // Tentar restaurar estado
+                gameState.restoreFromPassword(password.toString());
+                
+                // Voltar ao menu
+                appState = ApplicationState.MENU;
+                menuScreen.display();
+                window.setInputHandler(createMenuHandler());
+            }
+            
+            @Override
+            public void onChoice(String key) {
+                // Ignorar números durante entrada de password
+            }
+            
+            @Override
+            public void onArrowUp() {}
+            
+            @Override
+            public void onArrowDown() {}
+        });
+    }
+    
+    public static ApplicationState getAppState() {
+        return appState;
     }
 }
 
