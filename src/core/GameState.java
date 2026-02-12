@@ -21,6 +21,18 @@ public class GameState {
     // Status final do Ato 1
     public int niuweStatusFinal; // 0 = colapso, 1 = normal, 2 = heroico
     
+    // Novo: Sistema de Sanidade (Ato 2)
+    public int ellaSanity = 100;  // Começa no máximo (Ella ainda intacta)
+    
+    // Novo: Meta-informações para sistemas avançados
+    public int totalPlaythroughs = 0;  // Detecta replays
+    public long totalGameplayTime = 0;  // Tempo total em milissegundos
+    public int choicesMade = 0;  // Numero de decisões importantes feitas
+    
+    // Novo: Rastreamento de replay da memória de Niuwë
+    public boolean ellaViewedNiuweMemories = false;
+    public boolean ellaAccessedFileSystem = false;
+    
     public GameState() {
         this.currentPlayer = Player.NIUWE;
         this.sceneId = "NIUWE_INTRO";
