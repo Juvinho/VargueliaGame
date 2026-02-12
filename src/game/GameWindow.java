@@ -10,7 +10,16 @@ public class GameWindow extends JFrame implements KeyListener {
     private JTextArea textArea;
     private JScrollPane scrollPane;
     private GameEngine engine;
+    private MenuScreen menu;
     private boolean isWaitingForInput;
+    private InputHandler inputHandler;
+    
+    public interface InputHandler {
+        void onEnter();
+        void onChoice(String key);
+        void onArrowUp();
+        void onArrowDown();
+    }
     
     public GameWindow() {
         setTitle("Fundação Varguélia - Terminal 1983");
@@ -54,6 +63,14 @@ public class GameWindow extends JFrame implements KeyListener {
         this.engine = engine;
     }
     
+    public void setMenu(MenuScreen menu) {
+        this.menu = menu;
+    }
+    
+    public void setInputHandler(InputHandler handler) {
+        this.inputHandler = handler;
+    }
+    
     public void appendText(String text) {
         textArea.append(text);
         textArea.setCaretPosition(textArea.getDocument().getLength());
@@ -78,18 +95,34 @@ public class GameWindow extends JFrame implements KeyListener {
     
     @Override
     public void keyPressed(KeyEvent e) {
-        if (engine == null) return;
+        if (inputHandler != null) {
+            // Setas
+            if (e.getKeyCode() == KeyEvent.VK_UP) {
+                inputHandler.onArrowUp();
+                return;
+            }
+            if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                inputHandler.onArrowDown();
+                return;
+            }
+        }
+        
+        if (!isWaitingForInput) return;
         
         // ENTER ou SPACE: avança o texto
         if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_SPACE) {
-            if (!isWaitingForInput) {
+            if (inputHandler != null) {
+                inputHandler.onEnter();
+            } else if (engine != null) {
                 engine.onAdvance();
             }
         }
         
         // Números 1-9: escolhem opções
         if (Character.isDigit(e.getKeyChar())) {
-            if (isWaitingForInput) {
+            if (inputHandler != null) {
+                inputHandler.onChoice(String.valueOf(e.getKeyChar()));
+            } else if (engine != null && engine.isWaitingForChoice()) {
                 engine.onChoice(String.valueOf(e.getKeyChar()));
             }
         }
