@@ -352,4 +352,156 @@ public class GameWindow extends JFrame implements KeyListener {
             // Ignorar
         }
     }
+    
+    // ==================== BOOT MENU ESTILIZADO ====================
+    
+    /**
+     * Configura estilos adicionais para tela de boot (vermelho, verde água)
+     */
+    private void setupBootMenuStyles() {
+        Style styleRed = doc.addStyle("red", null);
+        StyleConstants.setForeground(styleRed, new Color(255, 100, 100)); // Vermelho claro
+        
+        Style styleAqua = doc.addStyle("aqua", null);
+        StyleConstants.setForeground(styleAqua, new Color(0, 255, 200)); // Verde água/ciano
+    }
+    
+    /**
+     * Repete uma string n vezes
+     */
+    private String repeat(String str, int count) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            sb.append(str);
+        }
+        return sb.toString();
+    }
+    
+    /**
+     * Centraliza texto em uma coluna de largura fixa
+     */
+    private String center(String text, int cols) {
+        int left = (cols - text.length()) / 2;
+        if (left < 0) left = 0;
+        return repeat(" ", left) + text;
+    }
+    
+    /**
+     * Imprime linha em vermelho
+     */
+    private void printlnRed(String text) {
+        try {
+            doc.insertString(doc.getLength(), text + "\n", doc.getStyle("red"));
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Imprime linha em verde água
+     */
+    private void printlnAqua(String text) {
+        try {
+            doc.insertString(doc.getLength(), text + "\n", doc.getStyle("aqua"));
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Imprime linha normal (branca)
+     */
+    private void println(String text) {
+        appendText(text + "\n", "default");
+    }
+    
+    private String linhaPisca = "";
+    private boolean piscaVisivel = true;
+    private Timer timerPisca;
+    private static final int COLS_BOOT = 60;
+    
+    /**
+     * Mostra a tela de boot/menu principal estilizada com texto piscante
+     */
+    public void mostrarBootMenu() {
+        clearText();
+        setupBootMenuStyles();
+        
+        String border = "|" + repeat("-", COLS_BOOT - 2) + "|";
+        
+        // Desenhar moldura e textos em vermelho
+        printlnRed(border);
+        printlnRed(center("V A R G U E N . O S", COLS_BOOT));
+        printlnRed(center("FUNDAÇÃO VARGUÉLIA", COLS_BOOT));
+        printlnRed(center("ELLA É DEMAIS [v1.0]", COLS_BOOT));
+        printlnRed(border);
+        println("");
+        
+        // Textos informativos em vermelho
+        printlnRed(center("Press ENTER to access the memory banks of Varguén...", COLS_BOOT));
+        printlnRed(center("(or DIE trying)", COLS_BOOT));
+        println("");
+        
+        // Preparar linha que pisca
+        linhaPisca = center("Aperte ENTER para iniciar", COLS_BOOT);
+        
+        // Iniciar piscar
+        iniciarTimerPisca();
+        setWaitingForInput(true);
+    }
+    
+    /**
+     * Desenha a linha piscante (ou apaga se invisível)
+     */
+    private void desenharLinhaPisca(boolean visivel) {
+        try {
+            if (visivel) {
+                doc.insertString(doc.getLength(), linhaPisca + "\n", doc.getStyle("aqua"));
+            } else {
+                // Escreve espaços em branco para "apagar"
+                doc.insertString(doc.getLength(), repeat(" ", linhaPisca.length()) + "\n", 
+                                doc.getStyle("default"));
+            }
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Inicia o timer que controla o piscar
+     */
+    private void iniciarTimerPisca() {
+        if (timerPisca != null && timerPisca.isRunning()) {
+            timerPisca.stop();
+        }
+        
+        timerPisca = new Timer(500, e -> {
+            try {
+                // Limpar apenas a última linha (não redesenhar tudo)
+                int len = doc.getLength();
+                int ultimaQuebraLinha = doc.getText(0, len).lastIndexOf("\n");
+                
+                if (ultimaQuebraLinha >= 0) {
+                    doc.remove(ultimaQuebraLinha + 1, len - ultimaQuebraLinha - 1);
+                }
+                
+                // Redesenhar a linha com estado alternado
+                piscaVisivel = !piscaVisivel;
+                desenharLinhaPisca(piscaVisivel);
+                
+            } catch (BadLocationException ex) {
+                ex.printStackTrace();
+            }
+        });
+        timerPisca.start();
+    }
+    
+    /**
+     * Para o timer de piscar (quando sair da tela)
+     */
+    public void pararTimerPisca() {
+        if (timerPisca != null && timerPisca.isRunning()) {
+            timerPisca.stop();
+        }
+    }
 }

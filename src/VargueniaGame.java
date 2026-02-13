@@ -24,8 +24,8 @@ public class VargueniaGame {
             // Mostrar tela de boot estilo MS-DOS 1986
             showBootScreenMSDOS();
             
-            // Mostrar tela de título
-            showTitleScreen();
+            // Mostrar tela de boot menu (estilizada com piscar)
+            showBootMenu();
             
             // Ir para menu principal
             goToMainMenu();
@@ -36,40 +36,45 @@ public class VargueniaGame {
     }
     
     /**
-     * Tela de título com "Varguelia" em vermelho
+     * Tela de boot menu estilizada com texto piscante em verde água
      */
-    private static void showTitleScreen() throws InterruptedException {
+    private static void showBootMenu() throws InterruptedException {
         window.clearText();
         currentUiState = UiState.TITLE_SCREEN;
         
-        // Linha de border com caracteres especiais DOS
-        String borderLine = "════════════════════════════════════════════════════════════════";
-        String emptyLine = "║                                                                ║";
+        // Mostrar a tela estilizada com piscar automático
+        window.mostrarBootMenu();
         
-        // Espaço vazio inicial
-        window.appendText("\n\n\n", "default");
+        // Aguardar ENTER
+        Object lock = new Object();
+        window.setInputHandler(new GameWindow.InputHandler() {
+            @Override
+            public void onEnter() {
+                if (audioEnabled) {
+                    MusicManager.getInstance().playSoundConfirm();
+                }
+                window.pararTimerPisca();
+                synchronized (lock) {
+                    lock.notify();
+                }
+            }
+            @Override
+            public void onChoice(String key) {}
+            @Override
+            public void onArrowUp() {}
+            @Override
+            public void onArrowDown() {}
+        });
         
-        // Linha superior
-        window.appendText("         " + borderLine + "\n", "default");
-        window.appendText("         " + emptyLine + "\n", "default");
-        
-        // Linha com título - "Varguelia" em vermelho
-        window.appendText("         ║               ", "default");
-        window.appendText("Varguelia", "error");  // Vermelho
-        window.appendText(" - Ella é Demais        ║\n", "default");
-        
-        window.appendText("         " + emptyLine + "\n", "default");
-        
-        // Linha inferior
-        window.appendText("         " + borderLine + "\n", "default");
-        
-        // Espaço e instrução
-        window.appendText("\n\n", "default");
-        window.appendText("              Pressione ENTER para continuar\n", "yellow");
-        
-        // Aguardar por um tempo antes de voltar ao fluxo normal
-        Thread.sleep(500);
+        synchronized (lock) {
+            try {
+                lock.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
+    
     
     private static void showBootScreenMSDOS() throws InterruptedException {
         window.setColorScheme(GameWindow.ColorScheme.OS_TERMINAL);
