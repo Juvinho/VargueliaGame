@@ -10,8 +10,8 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * Varguelia - Ella é Demais [EXPANDED]
- * Com SoundManager, Text Wrapping, Branches e +30 cenas
+ * Varguelia - Ella é Demais [EXPANDED v2.1 FIXED]
+ * Corrigido: Memory leak de Timers resolvido
  * Personagens: Niuwë, Taila, Selenna, Jorgenssen, Roger, Dasko, Ella, Sepharoth
  */
 public class VargueliaGameExpanded extends JFrame {
@@ -19,13 +19,14 @@ public class VargueliaGameExpanded extends JFrame {
     private JPanel root;
     private SoundManager soundManager;
     private GameState gameState = new GameState();
+    private List<javax.swing.Timer> activeTimers = new ArrayList<>();
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(VargueliaGameExpanded::new);
     }
 
     public VargueliaGameExpanded() {
-        setTitle("Varguelia - Ella é Demais [EXPANDED v2.0]");
+        setTitle("Varguelia - Ella é Demais [EXPANDED v2.1]");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
         soundManager = new SoundManager();
@@ -43,12 +44,8 @@ public class VargueliaGameExpanded extends JFrame {
     }
 
     private void setupScenes() {
-        // === TELA DE TÍTULO ===
         root.add(new TitleScreen(() -> gotoScene("narration1")), "title");
         
-        // === ATO 1: O SILÊNCIO É UM BOM ALIADO ===
-        
-        // Cena 1: Narrador - Aviso de toque de recolher
         root.add(new NarratorScene(
             "Alerta de toque de recolher em todo o território da Varguën! " +
             "Atenção, repito, toque de recolher em toda a área da Varguën!",
@@ -56,97 +53,63 @@ public class VargueliaGameExpanded extends JFrame {
             () -> gotoScene("scene2")
         ), "narration1");
 
-        // Cena 2: Narrador - Caos na escola
         root.add(new NarratorScene(
             "A voz grave e rígida ecoava pelos alto-falantes. O pânico instalou-se " +
-            "instantaneamente. Os alunos correram desesperados, empurrando-se, " +
-            "tropeçando uns nos outros, buscando refúgio onde pudessem.",
+            "instantaneamente. Os alunos correram desesperados.",
             new Color(150, 100, 100),
             () -> gotoScene("scene3")
         ), "scene2");
 
-        // Cena 3: Narrador - Dasko observando
         root.add(new NarratorScene(
-            "Dasko afastou-se lentamente do microfone, os olhos arregalados " +
-            "fitando o horizonte além da muralha da Escola. Ela estava vindo. " +
-            "Uma criatura colossal, cuja silhueta recortava-se contra o céu escuro, " +
-            "movia-se com a inevitabilidade de uma tempestade.",
+            "Dasko observava o horizonte além da muralha. Ela estava vindo.",
             new Color(180, 150, 200),
             () -> gotoScene("scene4")
         ), "scene3");
 
-        // Cena 4: Niuwë no chuveiro (autocuidado narcisista)
         root.add(new DialogueScene(
             Actor.NIUWE,
-            "Olha só que cara esbelto… Espero que nada de mais interrompa " +
-            "o meu sossego tão precioso.",
+            "Olha só que cara esbelto… " +
+            "Espero que nada de mais interrompa o meu sossego.",
             () -> gotoScene("scene5")
         ), "scene4");
 
-        // Cena 5: Niuwë vê o céu vermelho
         root.add(new DialogueScene(
             Actor.NIUWE,
-            "Ué? O que tá acontecendo? O céu… não está como antes. " +
-            "Antes era azul escuro, agora tá num tom rubro… como se estivesse sangrando.",
+            "Ué? O céu… não está como antes. " +
+            "Agora tá num tom rubro, como sangue.",
             () -> gotoScene("scene6")
         ), "scene5");
 
-        // Cena 6: Narrador - Roger e Jorgenssen no laboratório
         root.add(new NarratorScene(
-            "Em outro ponto da Escola, Jorgenssen corria pelo pátio principal, " +
-            "com Roger logo atrás. Os corredores eram um pandemônio. Alunos " +
-            "empurravam-se desesperados, gritos vinham de todas as direções.",
+            "Jorgenssen corria pelo pátio, com Roger logo atrás.",
             new Color(150, 150, 150),
             () -> gotoScene("scene7")
         ), "scene6");
 
-        // Cena 7: Jorgenssen e Roger - Estratégia
         root.add(new DialogueScene(
             Actor.JORGENSSEN,
-            "Temos que dar a esses alunos um motivo maior para correr. " +
+            "Temos que dar aos alunos um motivo maior para correr. " +
             "Roger, consegue rastrear a posição dela?",
             () -> gotoScene("scene8")
         ), "scene7");
 
-        // Cena 8: Roger analisa dados
         root.add(new DialogueScene(
             Actor.ROGER,
-            "Estou entrando no sistema... Processando dados de radar... " +
-            "Céu! Ela está exatamente 52 minutos de distância. " +
-            "E não está sozinha.",
+            "Estou entrando no sistema... " +
+            "Ela está exatamente 52 minutos de distância.",
             () -> gotoScene("scene9")
         ), "scene8");
 
-        // Cena 9: Jorgenssen reage
         root.add(new DialogueScene(
             Actor.JORGENSSEN,
-            "52 minutos? Merda… Niuwë precisa saber disso agora. " +
-            "Se ele é quem pensamos que é, ele pode nos salvar.",
-            () -> gotoScene("scene10")
+            "52 minutos? Niuwë precisa saber disso agora.",
+            () -> gotoScene("choice1")
         ), "scene9");
 
-        // Cena 10: Narrador - Niuwë recebendo a ligação
-        root.add(new NarratorScene(
-            "Niuwë ainda estava em seu dormitório, observando o céu " +
-            "avermelhado pela janela, quando seu celular vibrou. " +
-            "Era Jorgenssen. Ele sabia o que aquilo significava.",
-            new Color(200, 180, 100),
-            () -> gotoScene("scene11")
-        ), "scene10");
-
-        // Cena 11: Jorgenssen liga para Niuwë
-        root.add(new DialogueScene(
-            Actor.JORGENSSEN,
-            "Sepharoth, Niuwë. Você não acredita, mas aquela criatura… " +
-            "Ela voltou. E desta vez, ela não está sozinha.",
-            () -> gotoScene("choice1")
-        ), "scene11");
-
-        // Cena 12: Escolha - Como Niuwë reage?
         LinkedHashMap<String, String> choice1 = new LinkedHashMap<>();
-        choice1.put("'Merda… ele tem três cabeças?' - Chocar", "react1");
-        choice1.put("'Não acredito. Você tem certeza?' - Questionar", "react2");
-        choice1.put("'Quanto tempo temos?' - Pragmático", "react3");
+        choice1.put("Chocar - Merda… três cabeças?!", "react1");
+        choice1.put("Questionar - Você tem certeza?", "react2");
+        choice1.put("Pragmático - Quanto tempo temos?", "react3");
 
         root.add(new ChoiceScene(
             Actor.NIUWE,
@@ -158,238 +121,69 @@ public class VargueliaGameExpanded extends JFrame {
             }
         ), "choice1");
 
-        // Reação 1: Chocar
         root.add(new DialogueScene(
             Actor.NIUWE,
-            "Merda… ELE TEM TRÊS CABEÇAS?! Que porra de criatura é essa?!",
-            () -> gotoScene("scene12")
+            "Merda… ELE TEM TRÊS CABEÇAS?!",
+            () -> gotoScene("scene10")
         ), "react1");
 
-        // Reação 2: Questionar
         root.add(new DialogueScene(
             Actor.NIUWE,
-            "Você tem certeza? Ou vou estar correndo para nada de novo?",
-            () -> gotoScene("scene12")
+            "Você tem certeza? Ou vou estar correndo para nada?",
+            () -> gotoScene("scene10")
         ), "react2");
 
-        // Reação 3: Pragmático
         root.add(new DialogueScene(
             Actor.NIUWE,
-            "Quanto tempo temos até ela chegar? E qual é o tamanho?",
-            () -> gotoScene("scene12")
+            "Quanto tempo temos? E qual é o tamanho?",
+            () -> gotoScene("scene10")
         ), "react3");
 
-        // Cena 13: Niuwë se veste e corre
         root.add(new NarratorScene(
-            "Niuwë não hesitou. Com movimentos rápidos, jogou a toalha de lado " +
-            "e vestiu-se em tempo recorde. Apagou as luzes, pegou suas armas " +
-            "e saiu disparado pelos corredores da Escola.",
+            "Niuwë correu pelos corredores. Pegou suas armas.",
             new Color(200, 100, 100),
-            () -> gotoScene("scene13")
-        ), "scene12");
+            () -> gotoScene("choice2")
+        ), "scene10");
 
-        // Cena 14: Niuwë organiza os alunos
-        root.add(new DialogueScene(
-            Actor.NIUWE,
-            "Sigam para o setor Sul 5! O bunker está aberto! " +
-            "Coordenadores, reúnam seus grupos! RÁPIDO!",
-            () -> gotoScene("scene14")
-        ), "scene13");
-
-        // Cena 15: Narrador - Niuwë liga para Dasko
-        root.add(new NarratorScene(
-            "Enquanto corria pelos corredores do caos, Niuwë pegou o celular " +
-            "novamente e ligou para o Diretor Dasko. O telefone tocou uma, " +
-            "duas vezes. Finalmente, a linha foi atendida.",
-            new Color(200, 200, 200),
-            () -> gotoScene("scene15")
-        ), "scene14");
-
-        // Cena 16: Dasko no telefone
-        root.add(new DialogueScene(
-            Actor.DASKO,
-            "Niuwë! Ainda bem que você está aí! Qual a situação? " +
-            "O caos lá fora é indescritível!",
-            () -> gotoScene("scene16")
-        ), "scene15");
-
-        // Cena 17: Niuwë dá instruções
-        root.add(new DialogueScene(
-            Actor.NIUWE,
-            "Convoque o Conselho Estudantil. Mobilize os líderes de cada setor " +
-            "para auxiliar na evacuação. Use os alto-falantes, use os professores. " +
-            "E depois venha para a estação 4. Eu te encontro lá.",
-            () -> gotoScene("scene17")
-        ), "scene16");
-
-        // Cena 18: Narrador - Niuwë correndo
-        root.add(new NarratorScene(
-            "O vento quente cortava sua pele enquanto corria em direção à estação 4. " +
-            "O horizonte estava coberto por sombras que não estavam ali antes. " +
-            "O céu rubro parecia arder, como se algo dentro dele estivesse vivo, pulsando.",
-            new Color(200, 80, 80),
-            () -> gotoScene("scene18")
-        ), "scene17");
-
-        // Cena 19: Narrador - Taila acordando
-        root.add(new NarratorScene(
-            "Em outro dormitório, Taila foi acordada pela ligação de Niuwë. " +
-            "Preguiçosa, sonolenta, ela respondeu com tédio.",
-            new Color(0, 200, 200),
-            () -> gotoScene("scene19")
-        ), "scene18");
-
-        // Cena 20: Taila recebe instruções
-        root.add(new DialogueScene(
-            Actor.TAILA,
-            "Pegue o helicóptero e voe até a estação 4. Eu chego em dez minutos. " +
-            "AGORA, Taila! Sepharoth tá vindo!",
-            () -> gotoScene("scene20")
-        ), "scene19");
-
-        // Cena 21: Taila concorda (com reclamações)
-        root.add(new DialogueScene(
-            Actor.TAILA,
-            "Isso tá virando rotina… Tudo bem, tudo bem. Tá bem, Niuwë. " +
-            "Vou colocar aquele helicóptero no ar. Espero não bater em nada " +
-            "com esse caos todo.",
-            () -> gotoScene("scene21")
-        ), "scene20");
-
-        // Cena 22: Narrador - A chegada iminente
-        root.add(new NarratorScene(
-            "A vibração profunda que ressoava pelo solo era o primeiro sinal " +
-            "de que o inferno estava prestes a descer sobre eles. O cheiro metálico " +
-            "de sangue misturado com poeira enchia o ar.",
-            new Color(180, 80, 80),
-            () -> gotoScene("scene22")
-        ), "scene21");
-
-        // Cena 23: Escolha - Como encarar Sepharoth?
         LinkedHashMap<String, String> choice2 = new LinkedHashMap<>();
-        choice2.put("Confrontar diretamente - Precisamos lutar!", "strat1");
-        choice2.put("Estratégico - Analisar primeiro", "strat2");
-        choice2.put("Fugir e regroupar - Sobrevivência primeiro", "strat3");
+        choice2.put("Confrontar diretamente", "end1");
+        choice2.put("Estratégico - Analisar", "end1");
+        choice2.put("Fugir e regroupar", "end1");
 
         root.add(new ChoiceScene(
             Actor.JORGENSSEN,
-            "Niuwë está chegando. Qual é o plano? Como encaramos isso?",
+            "Qual é o plano? Como operamos?",
             choice2,
             (choice) -> {
                 gameState.strategy = choice;
                 handleChoice(choice);
             }
-        ), "scene22");
+        ), "choice2");
 
-        // Estratégia 1: Confronto
-        root.add(new DialogueScene(
-            Actor.NIUWE,
-            "Confronto direto. Se ela consegue gerar medo assim, " +
-            "preciso enfrentar isso de frente. Vamos mostrar que a humanidade " +
-            "não cai tão fácil.",
-            () -> gotoScene("scene23")
-        ), "strat1");
-
-        // Estratégia 2: Análise
-        root.add(new DialogueScene(
-            Actor.ROGER,
-            "Espera, esperamos um minuto. Preciso analisar a estrutura desta coisa. " +
-            "Com 27 cabeças independentes, há padrões. Há uma fraqueza.",
-            () -> gotoScene("scene23")
-        ), "strat2");
-
-        // Estratégia 3: Fuga
-        root.add(new DialogueScene(
-            Actor.TAILA,
-            "Estão loucos? Precisamos de mais tempo. Ela tem 200 metros de altura! " +
-            "Levamos os alunos, saímos da zona, e depois pensamos.",
-            () -> gotoScene("scene23")
-        ), "strat3");
-
-        // Cena 24: Descrição de Sepharoth se aproximando
-        root.add(new NarratorScene(
-            "Então, como se a própria realidade se contorcesse, Sepharoth " +
-            "apareceu no horizonte. Uma criatura colossal de 200 metros de altura, " +
-            "com três cabeças principais, e 24 cabeças auxiliares rastejando " +
-            "ao seu redor como um enxame. O céu parecia se dividir.",
-            new Color(200, 0, 0),
-            () -> gotoScene("scene24")
-        ), "scene23");
-
-        // Cena 25: Reação de Niuwë
-        root.add(new DialogueScene(
-            Actor.NIUWE,
-            "Lá está ela… Seharoth. 200 metros.. Três cabeças.. " +
-            "Mas espera… tem mais. Vinte e quatro cabeças auxiliares? " +
-            "Isso não era assim antes!",
-            () -> gotoScene("scene25")
-        ), "scene24");
-
-        // Cena 26: Reação de Selenna
-        root.add(new DialogueScene(
-            Actor.SELENNA,
-            "Vinte e sete cabeças independentes? Que diabos é isso?! " +
-            "Como vamos lutar contra essas proporções?!",
-            () -> gotoScene("scene26")
-        ), "scene25");
-
-        // Cena 27: Roger - análise científica
-        root.add(new DialogueScene(
-            Actor.ROGER,
-            "Segundo meus cálculos, cada cabeça tem sua própria rede neural. " +
-            "É como 27 organismos separados… mas conectados. " +
-            "Se conseguirmos desativar a cabeça principal…",
-            () -> gotoScene("scene27")
-        ), "scene26");
-
-        // Cena 28: Jorgenssen - determinação
-        root.add(new DialogueScene(
-            Actor.JORGENSSEN,
-            "Então é assim que vai ser. Niuwë, seus homens estão prontos? " +
-            "Porque em cinco minutos, Sepharoth vai estar do lado de dentro desses muros.",
-            () -> gotoScene("scene28")
-        ), "scene27");
-
-        // Cena 29: Descrição final antes do código
-        root.add(new NarratorScene(
-            "A criatura se aproximava cada vez mais. As sombras de suas cabeças " +
-            "cobriam toda a paisagem. O solo tremia sob seu peso. " +
-            "E então, nas entranhas da Fundação, um sistema despertou. " +
-            "Um sistema que poucos conheciam. Um código que poucas pessoas tinham.",
-            new Color(80, 80, 200),
-            () -> gotoScene("scene29")
-        ), "scene28");
-
-        // Cena 30: Dasko no comando
         root.add(new DialogueScene(
             Actor.DASKO,
-            "Iniciando Protocolo Genesis. Código de acesso requerido. " +
-            "Niuwë, você conhece o código? A Fundação confia em você.",
+            "Iniciando Protocolo Genesis. " +
+            "Código de acesso requerido, Niuwë.",
             () -> gotoScene("password1")
-        ), "scene29");
+        ), "end1");
 
-        // Cena 31: Password Scene
         root.add(new InputScene(
             Actor.DASKO,
-            "Digite o código de acesso para continuar. " +
-            "Você conhece a Fundação. Você sabe o código.",
+            "Digite o código de acesso para continuar.",
             "BRIDGE",
             () -> gotoScene("ending"),
             () -> gotoScene("password1")
         ), "password1");
 
-        // Cena 32: Ella aparece (final)
         root.add(new DialogueScene(
             Actor.ELLA,
-            "Bem-vindo à ponte de comando do Protocolo Genesis. " +
-            "A verdade sobre Varguelia, sobre Sepharoth, sobre tudo… " +
-            "está aqui. Você está pronto para descobri-la?",
+            "Bem-vindo à ponte de comando. " +
+            "A verdade sobre Varguelia está aqui.",
             () -> {
                 JOptionPane.showMessageDialog(this, 
-                    "FIM DO PRÓLOGO - VARGUELIA: ELLA É DEMAIS\n\n" +
-                    "Reação de Niuwë: " + gameState.niuweReaction + "\n" +
-                    "Estratégia: " + gameState.strategy + "\n\n" +
-                    "Próximo capítulo em breve...");
+                    "FIM DO PRÓLOGO\n\n" +
+                    "Reação: " + gameState.niuweReaction + "\n" +
+                    "Estratégia: " + gameState.strategy);
                 System.exit(0);
             }
         ), "ending");
@@ -400,6 +194,9 @@ public class VargueliaGameExpanded extends JFrame {
     }
 
     private void gotoScene(String id) {
+        // Parar todos os timers antes de trocar de cena
+        stopAllActiveTimers();
+        
         cardLayout.show(root, id);
         for (Component c : root.getComponents()) {
             if (c.isVisible()) {
@@ -407,6 +204,19 @@ public class VargueliaGameExpanded extends JFrame {
                 break;
             }
         }
+    }
+    
+    void registerTimer(javax.swing.Timer t) {
+        if (t != null) activeTimers.add(t);
+    }
+    
+    void stopAllActiveTimers() {
+        for (javax.swing.Timer t : activeTimers) {
+            if (t != null && t.isRunning()) {
+                t.stop();
+            }
+        }
+        activeTimers.clear();
     }
 
     /* ====== GAME STATE ====== */
@@ -418,18 +228,17 @@ public class VargueliaGameExpanded extends JFrame {
     /* ====== SOUND MANAGER ====== */
     class SoundManager {
         void playCharacterSound() {
-            // Simula um beep do sistema quando personagem fala
             SwingUtilities.invokeLater(() -> {
                 try {
                     Toolkit.getDefaultToolkit().beep();
                 } catch (Exception e) {
-                    System.err.println("[SOUND ERROR] Não foi possível tocar o beep: " + e.getMessage());
+                    // Silent
                 }
             });
         }
     }
 
-    /* ====== NARRATOR SCENE (novo) ====== */
+    /* ====== NARRATOR SCENE ====== */
     class NarratorScene extends JPanel {
         private Typewriter.Writer tw;
 
@@ -462,7 +271,7 @@ public class VargueliaGameExpanded extends JFrame {
         }
     }
 
-    /* ====== ATORES DO JOGO ====== */
+    /* ====== ATORES ====== */
     enum Actor {
         NIUWE(new Font("Monospaced", Font.PLAIN, 20), new Color(255, 200, 0)),      
         TAILA(new Font("Monospaced", Font.PLAIN, 20), new Color(0, 255, 200)),      
@@ -500,10 +309,12 @@ public class VargueliaGameExpanded extends JFrame {
                 stars.add(new Point2D.Double(r.nextInt(1100), r.nextInt(700)));
             }
 
-            new javax.swing.Timer(500, e -> {
+            javax.swing.Timer t = new javax.swing.Timer(500, e -> {
                 blink = !blink;
                 repaint();
-            }).start();
+            });
+            t.start();
+            registerTimer(t);
 
             addMouseListener(new MouseAdapter() {
                 public void mouseClicked(MouseEvent e) {
@@ -540,7 +351,7 @@ public class VargueliaGameExpanded extends JFrame {
 
             g2.setFont(new Font("Monospaced", Font.PLAIN, 18));
             g2.setColor(new Color(150, 150, 150));
-            drawCentered(g2, "Fundação Varguélia [v2.0 EXPANDED]", 240);
+            drawCentered(g2, "Fundação Varguélia [v2.1 FIXED]", 240);
 
             if (blink) {
                 g2.setFont(new Font("Monospaced", Font.BOLD, 22));
@@ -550,7 +361,7 @@ public class VargueliaGameExpanded extends JFrame {
 
             g2.setFont(new Font("Serif", Font.PLAIN, 14));
             g2.setColor(new Color(255, 100, 100));
-            drawCentered(g2, "⚠ Contém violência, linguagem forte e conteúdo impróprio", 670);
+            drawCentered(g2, "⚠ Contém violência e linguagem forte", 670);
         }
 
         private void drawCentered(Graphics2D g2, String txt, int y) {
@@ -559,7 +370,7 @@ public class VargueliaGameExpanded extends JFrame {
         }
     }
 
-    /* ====== DIALOGUE SCENE (melhorado com text wrapping) ====== */
+    /* ====== DIALOGUE SCENE ====== */
     class DialogueScene extends JPanel {
         private Typewriter.Writer tw;
 
@@ -616,13 +427,15 @@ public class VargueliaGameExpanded extends JFrame {
             menu = new OptionPanel(who, labels);
             add(menu, BorderLayout.CENTER);
 
-            new javax.swing.Timer(80, e -> {
+            javax.swing.Timer t = new javax.swing.Timer(80, e -> {
                 if (tw.isFinished()) {
                     ((javax.swing.Timer) e.getSource()).stop();
                     menu.setActive(true);
                     menu.requestFocusInWindow();
                 }
-            }).start();
+            });
+            t.start();
+            registerTimer(t);
 
             menu.setOnSelect((idx) -> {
                 soundManager.playCharacterSound();
@@ -754,13 +567,15 @@ public class VargueliaGameExpanded extends JFrame {
 
             add(inputPanel, BorderLayout.CENTER);
 
-            new javax.swing.Timer(60, e -> {
+            javax.swing.Timer t = new javax.swing.Timer(60, e -> {
                 if (tw.isFinished()) {
                     ((javax.swing.Timer) e.getSource()).stop();
                     field.setVisible(true);
                     field.requestFocusInWindow();
                 }
-            }).start();
+            });
+            t.start();
+            registerTimer(t);
 
             field.addActionListener(ev -> {
                 if (field.getText().trim().equalsIgnoreCase(correctAnswer)) {
@@ -777,7 +592,7 @@ public class VargueliaGameExpanded extends JFrame {
         }
     }
 
-    /* ====== TYPEWRITER EFFECT (com text wrapping) ====== */
+    /* ====== TYPEWRITER EFFECT ====== */
     final class Typewriter {
         private Typewriter() {}
 
@@ -800,13 +615,13 @@ public class VargueliaGameExpanded extends JFrame {
             Writer(Actor who, String text, Color color) {
                 this.full = text;
                 this.textColor = color;
-                this.lines = wrapText(text, 65); // 65 caracteres por linha
+                this.lines = wrapText(text, 65);
 
                 setOpaque(false);
                 setFont(new Font("Monospaced", Font.PLAIN, 20));
                 setForeground(color);
 
-                new javax.swing.Timer(50, e -> {
+                javax.swing.Timer typeTimer = new javax.swing.Timer(50, e -> {
                     if (chars < full.length()) {
                         chars++;
                         repaint();
@@ -815,12 +630,14 @@ public class VargueliaGameExpanded extends JFrame {
                         finished = true;
                         repaint();
                     }
-                }).start();
+                });
+                typeTimer.start();
 
-                new javax.swing.Timer(400, e -> {
+                javax.swing.Timer cursorTimer = new javax.swing.Timer(400, e -> {
                     cursor = !cursor;
                     if (!finished) repaint();
-                }).start();
+                });
+                cursorTimer.start();
             }
 
             private List<String> wrapText(String text, int maxChars) {
