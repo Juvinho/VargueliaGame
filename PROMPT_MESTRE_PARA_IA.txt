@@ -1,0 +1,430 @@
+==================================================
+GUIA EXECUTIVO - VARGUELIA: ELLA É DEMAIS
+Jogo Narrativo Java (MS-DOS 1983 Avançado)
+==================================================
+
+Você é uma IA especialista em desenvolvimento de jogos em Java. 
+Sua tarefa é CONTINUAR O DESENVOLVIMENTO do jogo "Varguelia: Ella é Demais".
+
+##################################################
+## ESTADO ATUAL DO PROJETO
+##################################################
+
+✅ COMPLETADO (100%):
+  ☑ Arquitetura completa definida (14 classes Java)
+  ☑ Boot screen MS-DOS com animações
+  ☑ Tela de título ASCII com "Varguelia" em VERMELHO
+  ☑ Menu principal com 6 opções funcionando
+  ☑ PasswordScreen (entrada de código)
+  ☑ LogsScreen (simulação DOS DIR/TYPE)
+  ☑ OptionsScreen (volume, velocidade, glitches, brilho)
+  ☑ CreditsScreen (créditos com rolagem)
+  ☑ MusicManager (4 temas sintetizados + 4 efeitos)
+  ☑ SanitySystem (0-100, distorções, paranoia)
+  ☑ TerminalSystem (reações, auto-correção, replay detection)
+  ☑ VarguenFileSystem (6 arquivos simulados)
+  ☑ MemorySystem (replay de cenas com variações)
+  ☑ InactivityMonitor (daemon com mensagens misteriosas)
+  ☑ Compilação bem-sucedida (Exit Code 0)
+
+⏳ ATUAL (50%):
+  ⚠ Integração do GameEngine com narrativa
+  ⚠ Password encoding/decoding (framework pronto)
+
+❌ AINDA A FAZER (0%):
+  ✗ 8+ cenas do Ato 1 (Niuwë)
+  ✗ 8+ cenas do Ato 2 (Ella)
+  ✗ Aplicação de consequências (flags, sanidade)
+  ✗ Efeito typewriter (velocidade variável)
+  ✗ Música dinâmica com sanidade
+  ✗ Finais múltiplos
+
+##################################################
+## ESTRUTURA DO PROJETO
+##################################################
+
+Linguagem: Java 17
+Framework: Swing (JFrame, JTextPane, JScrollPane)
+Som: javax.sound.sampled (síntese PCM, 44.1kHz, 16-bit)
+Versão: 0.2 (menu funcional)
+GitHub: https://github.com/Juvinho/VargueliaGame
+
+Pacotes:
+  • VargueniaGame.java (main, orquestrador)
+  • core/ → GameState.java, Scene.java
+  • game/ → GameWindow, GameEngine, MenuScreen, PasswordScreen, LogsScreen, 
+            OptionsScreen, CreditsScreen, UiState enum
+  • managers/ → MusicManager, SanitySystem, TerminalSystem, MemorySystem, 
+               VarguenFileSystem, InactivityMonitor, RetroSoundGenerator, 
+               RetroMusicGenerator
+
+##################################################
+## NARRATIVA - DOIS ATOS
+##################################################
+
+ATO 1 - NIUWË (Inevitável morte, escolhas mudam legado):
+  Cena 1: Toque de recolher, caos no dormitório
+  Cena 2: Ligação do amigo Jorgenssen
+  Cena 3: Corredor com alunos assustados
+  Cena 4: Encontro com Dasko
+  Cena 5: Helicóptero (veem Sepharoth colossal)
+  Cena 6: Queda na floresta, sacrifício de Taila
+  Cena 7: Ponte dos Eventos (encontro com Melaninne)
+  Cena 8: Morte sobrenatural (coisa invisível o estrangula)
+
+Fim Ato 1:
+  → Geração de PASSWORD (codifica flags Niuwë)
+  → Volta ao menu
+  → Transição para Ato 2
+
+ATO 2 - ELLA (Investigação, sobrenatural, sanidade decai):
+  Cena 1: Semana normal, estátua dos 3 guerreiros
+  Cena 2: Investigação da estátua
+  Cena 3: Conversa com amigos (info sobre Niuwë varia por flags)
+  Cena 4: Acesso a arquivos (sanidade diminui conforme lê)
+  Cena 5: Quarto rosa (aparição da sombra depende de sanidade)
+  Cena 6: Testes físicos (preparação de guerreira)
+  Cena 7: Exploração Estação 4 (depende de flag niuweExplorouEstacao4)
+  Cena 8: Bridge Event climax (final depende de sanidade + escolhas)
+
+##################################################
+## GAMEPLAY - FLUXO PRINCIPAL
+##################################################
+
+1. Boot VARGUEN-OS (2-3 segundos)
+   Mensagens: "Starting...", "Memory check...", "VARGUEN-OS v1.0 OK"
+
+2. Tela de Título (aguarda ENTER)
+   ════════════════════════════════════════════════════════════════
+   ║  [VERMELHO] → Varguelia ← [BRANCO] - Ella é Demais          ║
+   ════════════════════════════════════════════════════════════════
+   Pressione ENTER para continuar
+
+3. Menu Principal (aguarda 1-6)
+   1. NOVO JOGO → Reseta GameState → Ato 1, Cena 1
+   2. CONTINUAR (PASSWORD) → PasswordScreen → Decodifica → Ato 2, Cena 1
+   3. ARQUIVOS DA VARGUËN → LogsScreen (DIR/TYPE) → volta menu
+   4. OPÇÕES → OptionsScreen → volta menu
+   5. CRÉDITOS → CreditsScreen (rolagem) → volta menu
+   6. SAIR → System.exit(0)
+
+4. Gameplay (Ato 1 ou Ato 2)
+   • Mostra descrição da cena
+   • Se tem opções (escolhas):
+     - Imprime 1, 2, 3, etc.
+     - Aguarda número + ENTER
+     - Aplica consequências (flags, sanidade -/+)
+     - Carrega próxima cena
+   • Se não tem opções:
+     - Mostra "Pressione ENTER para continuar"
+     - Avança automaticamente
+
+5. Final de Ato 1
+   • Niuwë morre (canônico)
+   • Gerador de PASSWORD exibe código (VARG-XXXXX)
+   • Volta ao Menu Principal
+
+6. Final de Ato 2
+   • Múltiplos finais baseados em:
+     - Sanidade final (0-100)
+     - Escolhas principais (1-2 críticas)
+     - Flags do Ato 1 (afetam diálogos/cenas)
+
+##################################################
+## SISTEMA DE SANIDADE
+##################################################
+
+Escala: 0-100 (apenas para Ella, durante Ato 2)
+Inicial: 100 (perfeitamente sã)
+
+Níveis:
+  100-80: Sã          → Texto limpo, descrições objetivas
+  80-60: Preocupada   → Glitches ocasionais, pequenas variações
+  60-40: Paranóica    → Mais glitches, texto autocorrige
+  40-20: Dissociada   → Distorções severas, terminal comenta
+  20-0:  Insana       → Texto corrompido, reality break
+
+Modificadores (-/+):
+  -15: Ler muitos arquivos sobre Ponte
+  -10: Escolha "corajosa" em cena perigosa
+  -5:  Encontrar objeto relacionado a Niuwë
+  +5:  Escolha "cautelosa"
+  +10: Passar tempo descansando
+
+Efeito no texto:
+  Sanidade alta: "A Sombra move-se por aí."
+  Sanidade baixa: "A Sombra m0v0-s3 p0r aí... [ERRO] ...move-se..."
+               → depois autocorrige para o correto
+
+##################################################
+## PASSWORD - CODIFICAÇÃO
+##################################################
+
+Formato: VARG-XXXXXX (10 chars total, com hífen)
+
+Estrutura:
+  V A R G - X X X X X X
+  0 1 2 3   4 5 6 7 8 9
+
+  Pos 0-3: "VARG" (versão fixa)
+  Pos 4-5: Flags Niuwë (6 bits em base 36)
+  Pos 6-7: Sanidade inicial Ella (00-99)
+  Pos 8-9: Checksum (validação)
+
+Flags Niuwë (máscara de bits):
+  Bit 0: niuweFoiImpulsivo
+  Bit 1: niuweSalvouMaisAlunos
+  Bit 2: niuweExplorouEstacao4
+  Bit 3: niuweDialogouComDasko
+  Bit 4: niuweLutouDiretoComSepharoth
+  Bit 5: niuweAjudouJorgenssenRoger
+
+Exemplo:
+  Entrada: niuweSalvouMaisAlunos=true, sanidade=75
+  Password: VARG-20759Y
+  Ao decodificar:
+    → niuweSalvouMaisAlunos setado
+    → ellaSanity = 75
+    → Entra em Ato 2 com flags de Niuwë já aplicadas
+
+##################################################
+## SISTEMAS AVANÇADOS (JÁ IMPLEMENTADOS)
+##################################################
+
+1. MUSICMANAGER
+   - 4 temas: EXPLORATION, TENSION, DRAMATIC, MENU
+   - Síntese PCM em tempo real (sem WAV externo)
+   - Efeitos: playSoundKeyPress(), playSoundError(), 
+             playSoundConfirm(), playSoundBoot()
+   - Looping automático
+
+2. SANITYSYSTEM
+   - Escala 0-100
+   - displayDistortedText(String) → glitch + autocorreção
+   - getParanoiaDescription() → variações por sanidade
+   - trauma(int), recover(int)
+   - printTerminalComment() → [VARGUEN] questiona
+
+3. TERMINALSYSTEM
+   - onChoiceMade() → comentário aleatório
+   - selfCorrection() → glitch com autocorreção
+   - detectReplay() → "eu lembro de você..."
+   - displayDosCommand() → simula C:\> COMMAND
+   - printChoiceConsequences() → impactos em bullets
+   - reportAnomaly() → em vermelho
+   - bridgeMessage() → efeito flashing
+
+4. VARGUENFILESYSTEM
+   - 6 arquivos pré-inicializados:
+     LOG_NIUWE.TXT, BRIDGE_EVENTS.DAT, ELLA_DATA.BIN, 
+     MEMORY_BACKUP.001, SYSTEM.LOG, SOMBRA.???
+   - Alguns só aparecem com certas flags (unlock)
+   - executeDir() → lista arquivos
+   - executeType() → exibe conteúdo
+
+5. MEMORYSYSTEM
+   - replayWakingUp() → Niuwë acordando (2 variações)
+   - replayMoralChoice() → decisão passada
+   - replayBridgeEncounter() → encontro sobrenatural
+   - showImpact() → como passado afeta presente
+
+6. INACTIVITYMONITOR
+   - Daemon thread, check a cada 2s
+   - 10s inativo: "Você ainda está aí?"
+   - 20s: "Ela também esperava..."
+   - 30s: "VOLTE? POR FAVOR?" (urgente)
+   - 15+ mensagens no banco
+
+##################################################
+## O QUE VOCÊ DEVE FAZER AGORA
+##################################################
+
+**PRIORIDADE 1: NARRATIVA COMPLETA**
+
+1. Criar arquivo SceneLoader.java com todas as cenas:
+   - 8 cenas Ato 1 (ou mais)
+   - 8+ cenas Ato 2 (ou mais)
+   
+   Padrão para cada cena:
+   ```java
+   public static Scene createAto1Inicio() {
+       Scene scene = new Scene();
+       scene.id = "ato1_inicio";
+       scene.player = Player.NIUWE;
+       scene.text = "[Descrição narrativa em português]";
+       scene.options = new ArrayList<>();
+       scene.options.add(new SceneOption("1", "Opção A", "ato1_proxima_cena_a"));
+       scene.options.add(new SceneOption("2", "Opção B", "ato1_proxima_cena_b"));
+       return scene;
+   }
+   ```
+
+2. Implementar GameEngine.aplicarConsequencias():
+   ```java
+   switch (sceneId) {
+       case "ato1_alunos":
+           if (escolha.equals("1")) {
+               state.niuweSalvouMaisAlunos = true;
+           }
+           break;
+       case "ato2_arquivo":
+           if (escolha.equals("1")) {
+               state.ellaSanity -= 20; // Leu muitos detalhes
+           }
+           break;
+   }
+   ```
+
+3. Conectar cenas no GameEngine:
+   ```java
+   public void init() {
+       scenes = SceneLoader.loadAllScenes();
+       currentSceneId = (state.currentPlayer == Player.NIUWE) 
+           ? "ato1_inicio" 
+           : "ato2_inicio";
+   }
+   
+   public void mostrarCenaAtual() {
+       Scene scene = scenes.get(currentSceneId);
+       window.clearText();
+       window.appendText("[" + scene.player.name() + "]\n\n", "cyan");
+       window.appendText(scene.text + "\n\n", "default");
+       // ... mostrar opções
+   }
+   ```
+
+**PRIORIDADE 2: EFEITO TYPEWRITER**
+
+Implementar em GameWindow:
+```java
+public void typeText(String text, String style, int delayMs) {
+    for (char c : text.toCharArray()) {
+        appendText(String.valueOf(c), style);
+        try { Thread.sleep(delayMs); } 
+        catch (InterruptedException e) {}
+    }
+}
+```
+
+Usar em cenas:
+```java
+int speed = window.getTextSpeed(); // 0=instant, 1=rápido, 2=lento
+int delay = (speed == 0) ? 0 : (speed == 1) ? 30 : 80;
+window.typeText(scene.text, "default", delay);
+```
+
+**PRIORIDADE 3: FINAIS MÚLTIPLOS**
+
+Criar método após Ato 2:
+```java
+public void showEnding() {
+    if (state.ellaSanity > 80) {
+        showGoodEnding();
+    } else if (state.ellaSanity > 40) {
+        showNeutralEnding();
+    } else {
+        showBadEnding();
+    }
+}
+```
+
+**PRIORIDADE 4: TESTES E BALANCEAMENTO**
+
+- Playtestear todas as rotas de cenas
+- Ajustar modificadores de sanidade
+- Validar duração (2-3 horas target)
+- Testar password encode/decode em múltiplos casos
+
+##################################################
+## DETALHES TÉCNICOS
+##################################################
+
+Compilação:
+  cd VargueliaGame/
+  javac -encoding UTF-8 -d out \
+    src/*.java src/core/*.java \
+    src/game/*.java src/managers/*.java
+
+Execução:
+  java -cp out VargueniaGame
+
+Git:
+  git add -A && git commit -m "Sua mensagem" && git push origin main
+
+##################################################
+## CHECKLIST DE DESENVOLVIMENTO
+##################################################
+
+□ Implementar SceneLoader.java com 16+ cenas
+□ Conectar cenas ao GameEngine
+□ Implementar aplicarConsequencias() completo
+□ Adicionar efeito typewriter
+□ Teste de sanidade (verificar modifications)
+□ Implementar password encoding/decoding
+□ Criar 3 finais diferentes
+□ Teste completo do jogo (1 playthrough Ato 1 + Ato 2)
+□ Ajustar balanceamento de sanidade
+□ Documentar todas as cenas em comentários
+□ Commit final e push
+
+##################################################
+## REFERÊNCIA RÁPIDA
+##################################################
+
+GameState campos principais:
+  - currentPlayer: NIUWE ou ELLA
+  - currentSceneId: String (ex: "ato1_inicio")
+  - ellaSanity: int (0-100)
+  - niuweFoiImpulsivo: boolean
+  - niuweSalvouMaisAlunos: boolean
+  - niuweExplorouEstacao4: boolean
+  - niuweDialogouComDasko: boolean
+  - niuweLutouDiretoComSepharoth: boolean
+  - niuweAjudouJorgenssenRoger: boolean
+  - ponteAtiva: boolean
+  - sombraEncontrada: boolean
+
+UiState enum:
+  TITLE_SCREEN, MAIN_MENU, MENU_PASSWORD, MENU_LOGS,
+  MENU_OPTIONS, MENU_CREDITS, GAME
+
+Player enum:
+  NIUWE, ELLA
+
+Cores disponíveis em appendText():
+  "default" (branco), "error" (vermelho), "cyan", "yellow",
+  "cursor" (piscante)
+
+##################################################
+## PRÓXIMAS REUNIÕES
+##################################################
+
+Semana 1: Narrativa Ato 1 completa + Ato 2 primeiras cenas
+Semana 2: Consequências + Efeitos visuais (typewriter)
+Semana 3: Password final + Múltiplos finais + Testes
+Semana 4: Polimento, balanceamento e release
+
+##################################################
+## CONTATO / DOCUMENTAÇÃO
+##################################################
+
+Documentação completa:
+  → /VargueliaGame/GUIA_COMPLETO_VARGUELIA.md (1500+ linhas)
+
+GitHub:
+  → https://github.com/Juvinho/VargueliaGame
+
+Commits recentes:
+  - 322b254: Documentação: Guia completo
+  - 6a0e326: Menu principal enriquecido (6 opções)
+  - 7f2e55f: Implementar tela de título ASCII
+  - 61b5158: Adicionar sistemas avançados
+  - dc92d0e: Implementar estética MS-DOS pura
+
+##################################################
+
+Última atualização: Fevereiro 2026
+Status: Pronto para implementação de narrativa
+Próximo marcador: Cenas do Ato 1
+
+==================================================
