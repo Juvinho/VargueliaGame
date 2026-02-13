@@ -60,33 +60,16 @@ public class VargueniaGame {
         
         // === FASE 2: Verificação de Hardware ===
         window.showBootLoadingMessage("VARGUEN HARDWARE CHECK");
-        Thread.sleep(100);
-        
         window.showBootLoadingMessage("MEMORY:          256K");
-        Thread.sleep(100);
-        
         window.showBootLoadingMessage("SYSTEM BUS:      ACTIVE");
-        Thread.sleep(100);
-        
         window.showBootLoadingMessage("COM. ARRAY:      INITIALIZED");
         Thread.sleep(200);
         
-        // === FASE 3: Carregando programa principal ===
-        screen = new StringBuilder();
-        screen.append("┌────────────────────────────────────────────────────────────────────┐\n");
-        screen.append("│                      V A R G U E N . O S                           │\n");
-        screen.append("│                                                                    │\n");
-        screen.append("│                   Version 1.0 - 1983 Hardware                      │\n");
-        screen.append("└────────────────────────────────────────────────────────────────────┘\n");
-        screen.append("\n\n");
-        
-        window.setText(screen.toString());
-        
+        // === FASE 3: Carregando programa principal (sem redraw do logo) ===
         window.showBootLoadingMessage("LOADING GAME.EXE: ELLA_DEMAIS.COM");
         window.showBootLoadingMessage("LOADING NARRATIVE DATABASE");
         window.showBootLoadingMessage("INITIALIZING TEMPORAL PROTOCOL");
         window.showBootLoadingMessage("BRIDGE MONITOR: ACTIVE  ???");
-        
         Thread.sleep(400);
         
         // === FASE 4: Sistema pronto, aguardando ENTER ===
