@@ -24,54 +24,11 @@ public class VargueniaGame {
             // Mostrar tela de boot estilo MS-DOS 1986
             showBootScreenMSDOS();
             
-            // Mostrar tela de boot menu (estilizada com piscar)
-            showBootMenu();
-            
-            // Ir para menu principal
+            // Ir para menu principal (menu avançado com grid)
             goToMainMenu();
             
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
-    }
-    
-    /**
-     * Tela de boot menu estilizada com texto piscante em verde água
-     */
-    private static void showBootMenu() throws InterruptedException {
-        window.clearText();
-        currentUiState = UiState.TITLE_SCREEN;
-        
-        // Mostrar a tela estilizada com piscar automático
-        window.mostrarBootMenu();
-        
-        // Aguardar ENTER
-        Object lock = new Object();
-        window.setInputHandler(new GameWindow.InputHandler() {
-            @Override
-            public void onEnter() {
-                if (audioEnabled) {
-                    MusicManager.getInstance().playSoundConfirm();
-                }
-                window.pararTimerPisca();
-                synchronized (lock) {
-                    lock.notify();
-                }
-            }
-            @Override
-            public void onChoice(String key) {}
-            @Override
-            public void onArrowUp() {}
-            @Override
-            public void onArrowDown() {}
-        });
-        
-        synchronized (lock) {
-            try {
-                lock.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
     }
     
@@ -194,7 +151,7 @@ public class VargueniaGame {
     }
     
     /**
-     * Handler para o menu principal
+     * Handler para o menu principal (com suporte a setas LEFT/RIGHT)
      */
     private static GameWindow.InputHandler createMainMenuHandler() {
         return new GameWindow.InputHandler() {
@@ -212,7 +169,7 @@ public class VargueniaGame {
                 
                 try {
                     String selected = menuScreen.handleNumberSelect(Integer.parseInt(key));
-                    if (audioEnabled) {
+                    if (audioEnabled && selected != null) {
                         MusicManager.getInstance().playSoundKeyPress();
                     }
                 } catch (NumberFormatException e) {
@@ -237,6 +194,23 @@ public class VargueniaGame {
                     MusicManager.getInstance().playSoundKeyPress();
                 }
             }
+            
+            // Métodos adicionais para setas laterais (via reflection em GameWindow)
+            public void onArrowLeft() {
+                if (currentUiState != UiState.MAIN_MENU) return;
+                menuScreen.handleLeftArrow();
+                if (audioEnabled) {
+                    MusicManager.getInstance().playSoundKeyPress();
+                }
+            }
+            
+            public void onArrowRight() {
+                if (currentUiState != UiState.MAIN_MENU) return;
+                menuScreen.handleRightArrow();
+                if (audioEnabled) {
+                    MusicManager.getInstance().playSoundKeyPress();
+                }
+            }
         };
     }
     
@@ -249,22 +223,22 @@ public class VargueniaGame {
         }
         
         switch (selected) {
-            case "NOVO JOGO":
+            case "Novo Jogo":
                 startNewGame();
                 break;
-            case "CONTINUAR (PASSWORD)":
+            case "Continuar (Password)":
                 showPasswordScreen();
                 break;
-            case "ARQUIVOS DA VARGUËN":
+            case "Arquivos":
                 showLogsScreen();
                 break;
-            case "OPÇÕES":
+            case "Opções":
                 showOptionsScreen();
                 break;
-            case "CRÉDITOS":
+            case "Créditos":
                 showCreditsScreen();
                 break;
-            case "SAIR":
+            case "Sair":
                 System.exit(0);
                 break;
         }

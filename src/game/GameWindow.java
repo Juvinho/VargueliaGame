@@ -235,6 +235,31 @@ public class GameWindow extends JFrame implements KeyListener {
             return;
         }
         
+        // Setas laterais (LEFT/RIGHT) - use reflection para suportar novos métodos
+        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+            if (inputHandler != null) {
+                try {
+                    inputHandler.getClass().getMethod("onArrowLeft").invoke(inputHandler);
+                } catch (Exception ex) {
+                    // Ignorar se método não existir
+                }
+            }
+            e.consume();
+            return;
+        }
+        
+        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+            if (inputHandler != null) {
+                try {
+                    inputHandler.getClass().getMethod("onArrowRight").invoke(inputHandler);
+                } catch (Exception ex) {
+                    // Ignorar se método não existir
+                }
+            }
+            e.consume();
+            return;
+        }
+        
         // ENTER ou SPACE
         if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_SPACE) {
             if (inputHandler != null) {
