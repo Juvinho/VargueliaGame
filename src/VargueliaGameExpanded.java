@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.Consumer;
 
 /**
  * Varguelia - Ella é Demais [EXPANDED v2.1 FIXED]
@@ -247,7 +248,7 @@ public class VargueliaGameExpanded extends JFrame {
             setBackground(Color.BLACK);
             setLayout(new BorderLayout());
 
-            tw = Typewriter.create(null, text, color);
+            tw = Typewriter.create(null, text, color, VargueliaGameExpanded.this::registerTimer);
             tw.setBorder(new EmptyBorder(100, 80, 100, 80));
             add(tw, BorderLayout.CENTER);
 
@@ -379,7 +380,7 @@ public class VargueliaGameExpanded extends JFrame {
             setBackground(Color.BLACK);
             setLayout(new BorderLayout());
 
-            tw = Typewriter.create(who, text);
+            tw = Typewriter.create(who, text, who.color, VargueliaGameExpanded.this::registerTimer);
             tw.setBorder(new EmptyBorder(50, 80, 50, 80));
             add(tw, BorderLayout.CENTER);
 
@@ -414,7 +415,7 @@ public class VargueliaGameExpanded extends JFrame {
             setBackground(Color.BLACK);
             setLayout(new BorderLayout());
 
-            Typewriter.Writer tw = Typewriter.create(who, prompt);
+            Typewriter.Writer tw = Typewriter.create(who, prompt, who.color, VargueliaGameExpanded.this::registerTimer);
             tw.setBorder(new EmptyBorder(40, 80, 200, 80));
             add(tw, BorderLayout.NORTH);
 
@@ -538,7 +539,7 @@ public class VargueliaGameExpanded extends JFrame {
             setBackground(Color.BLACK);
             setLayout(new BorderLayout());
 
-            Typewriter.Writer tw = Typewriter.create(who, prompt);
+            Typewriter.Writer tw = Typewriter.create(who, prompt, who.color, VargueliaGameExpanded.this::registerTimer);
             tw.setBorder(new EmptyBorder(40, 80, 300, 80));
             add(tw, BorderLayout.NORTH);
 
@@ -597,11 +598,15 @@ public class VargueliaGameExpanded extends JFrame {
         private Typewriter() {}
 
         static Writer create(Actor who, String text) {
-            return new Writer(who, text, who != null ? who.color : new Color(150, 150, 150));
+            return new Writer(who, text, who != null ? who.color : new Color(150, 150, 150), null);
         }
 
         static Writer create(Actor who, String text, Color color) {
-            return new Writer(who, text, color);
+            return new Writer(who, text, color, null);
+        }
+
+        static Writer create(Actor who, String text, Color color, Consumer<javax.swing.Timer> timerRegistry) {
+            return new Writer(who, text, color, timerRegistry);
         }
 
         static class Writer extends JComponent {
@@ -611,10 +616,16 @@ public class VargueliaGameExpanded extends JFrame {
             private boolean cursor = true;
             private boolean finished = false;
             private Color textColor;
+            private Consumer<javax.swing.Timer> timerRegistry;
 
             Writer(Actor who, String text, Color color) {
+                this(who, text, color, null);
+            }
+
+            Writer(Actor who, String text, Color color, Consumer<javax.swing.Timer> timerRegistry) {
                 this.full = text;
                 this.textColor = color;
+                this.timerRegistry = timerRegistry;
                 this.lines = wrapText(text, 65);
 
                 setOpaque(false);
@@ -632,12 +643,14 @@ public class VargueliaGameExpanded extends JFrame {
                     }
                 });
                 typeTimer.start();
+                if (timerRegistry != null) timerRegistry.accept(typeTimer);
 
                 javax.swing.Timer cursorTimer = new javax.swing.Timer(400, e -> {
                     cursor = !cursor;
                     if (!finished) repaint();
                 });
                 cursorTimer.start();
+                if (timerRegistry != null) timerRegistry.accept(cursorTimer);
             }
 
             private List<String> wrapText(String text, int maxChars) {
@@ -691,7 +704,7 @@ public class VargueliaGameExpanded extends JFrame {
                 int y = fm.getAscent();
 
                 for (String line : lines) {
-                    int charsToShow = Math.min(chars - currentChar, line.length());
+                    int charsToShow = Math.max(0, Math.min(chars - currentChar, line.length()));
                     String visible = line.substring(0, charsToShow);
                     
                     if (chars >= currentChar + line.length() && 
