@@ -3,6 +3,8 @@ package game;
 public class MenuScreen {
     private GameWindow window;
     private int selectedOption = 0;
+    private static final int COLS = 60;
+    
     private String[] options = {
         "NOVO JOGO",
         "CONTINUAR (PASSWORD)",
@@ -16,52 +18,97 @@ public class MenuScreen {
         this.window = window;
     }
     
+    /**
+     * Repete uma string n vezes
+     */
+    private String repeat(String str, int count) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            sb.append(str);
+        }
+        return sb.toString();
+    }
+    
+    /**
+     * Centraliza texto em coluna fixa
+     */
+    private String center(String text) {
+        int left = (COLS - text.length()) / 2;
+        if (left < 0) left = 0;
+        return repeat(" ", left) + text;
+    }
+    
+    /**
+     * Imprime linha em vermelho
+     */
+    private void printlnRed(String text) {
+        try {
+            window.getStyledDocument().insertString(
+                window.getStyledDocument().getLength(), 
+                text + "\n", 
+                window.getStyledDocument().getStyle("red")
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Imprime linha com estilo customizado
+     */
+    private void printlnStyled(String text, String style) {
+        try {
+            window.getStyledDocument().insertString(
+                window.getStyledDocument().getLength(), 
+                text + "\n", 
+                window.getStyledDocument().getStyle(style)
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
     public void display() {
         window.clearText();
+        
+        String border = "|" + repeat("-", COLS - 2) + "|";
         
         // Espaço inicial
         window.appendText("\n\n", "default");
         
-        // Moldura superior com título
-        window.appendText("════════════════════════════════════════════════════════════════\n", "default");
-        window.appendText("║                                                              ║\n", "default");
-        window.appendText("║  ", "default");
-        window.appendText("Varguelia", "error");  // Vermelho
-        window.appendText(" - Ella é Demais                               ║\n", "default");
-        window.appendText("║                                                              ║\n", "default");
-        window.appendText("════════════════════════════════════════════════════════════════\n\n", "default");
+        // Moldura superior em vermelho
+        printlnRed(border);
+        printlnRed(center("Varguelia - Ella é Demais"));
+        printlnRed(border);
         
-        // Subtítulo
-        window.appendText("         MENU PRINCIPAL\n\n", "yellow");
+        window.appendText("\n", "default");
+        printlnStyled(center("MENU PRINCIPAL"), "yellow");
+        window.appendText("\n", "default");
         
-        // Opções de menu
+        // Opções de menu centralizadas
         for (int i = 0; i < options.length; i++) {
-            String prefix = (i + 1) + ". ";
+            String prefix = (i + 1) + ". " + options[i];
+            String line;
             
             if (i == selectedOption) {
-                window.appendText("         ", "default");
-                window.appendText("►", "cyan");
-                window.appendText(" ");
-                window.appendText(prefix, "cyan");
-                window.appendText(options[i], "cyan");
-                window.appendText(" ", "default");
-                window.appendText("◄\n", "cyan");
+                line = center("► " + prefix + " ◄");
+                printlnStyled(line, "cyan");
             } else {
-                window.appendText("           ");
-                window.appendText(prefix);
-                window.appendText(options[i] + "\n");
+                line = center(prefix);
+                window.appendText(line + "\n", "default");
             }
             window.appendText("\n", "default");
         }
         
-        window.appendText("════════════════════════════════════════════════════════════════\n\n", "default");
-        window.appendText("Use ", "default");
-        window.appendText("↑/↓", "cyan");
-        window.appendText(" ou ", "default");
-        window.appendText("1-6", "cyan");
-        window.appendText(" para escolher | ", "default");
-        window.appendText("ENTER", "cyan");
-        window.appendText(" para confirmar\n", "default");
+        // Moldura inferior em vermelho
+        printlnRed(border);
+        window.appendText("\n", "default");
+        
+        // Instruções
+        String instrucoes1 = "Use ↑/↓ ou 1-6 para escolher";
+        String instrucoes2 = "Pressione ENTER para confirmar";
+        printlnStyled(center(instrucoes1), "cyan");
+        printlnStyled(center(instrucoes2), "cyan");
         
         window.setWaitingForInput(true);
     }
