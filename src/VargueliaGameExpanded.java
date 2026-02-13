@@ -419,11 +419,13 @@ public class VargueliaGameExpanded extends JFrame {
     class SoundManager {
         void playCharacterSound() {
             // Simula um beep do sistema quando personagem fala
-            try {
-                Toolkit.getDefaultToolkit().beep();
-            } catch (Exception e) {
-                // Silent fail
-            }
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    Toolkit.getDefaultToolkit().beep();
+                } catch (Exception e) {
+                    System.err.println("[SOUND ERROR] Não foi possível tocar o beep: " + e.getMessage());
+                }
+            });
         }
     }
 
