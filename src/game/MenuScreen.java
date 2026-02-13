@@ -38,36 +38,6 @@ public class MenuScreen {
         return repeat(" ", left) + text;
     }
     
-    /**
-     * Imprime linha em vermelho
-     */
-    private void printlnRed(String text) {
-        try {
-            window.getStyledDocument().insertString(
-                window.getStyledDocument().getLength(), 
-                text + "\n", 
-                window.getStyledDocument().getStyle("red")
-            );
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    
-    /**
-     * Imprime linha com estilo customizado
-     */
-    private void printlnStyled(String text, String style) {
-        try {
-            window.getStyledDocument().insertString(
-                window.getStyledDocument().getLength(), 
-                text + "\n", 
-                window.getStyledDocument().getStyle(style)
-            );
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    
     public void display() {
         window.clearText();
         
@@ -77,12 +47,12 @@ public class MenuScreen {
         window.appendText("\n\n", "default");
         
         // Moldura superior em vermelho
-        printlnRed(border);
-        printlnRed(center("Varguelia - Ella é Demais"));
-        printlnRed(border);
+        window.appendText(border + "\n", "error");
+        window.appendText(center("Varguelia - Ella é Demais") + "\n", "error");
+        window.appendText(border + "\n", "error");
         
         window.appendText("\n", "default");
-        printlnStyled(center("MENU PRINCIPAL"), "yellow");
+        window.appendText(center("MENU PRINCIPAL") + "\n", "yellow");
         window.appendText("\n", "default");
         
         // Opções de menu centralizadas
@@ -92,7 +62,7 @@ public class MenuScreen {
             
             if (i == selectedOption) {
                 line = center("► " + prefix + " ◄");
-                printlnStyled(line, "cyan");
+                window.appendText(line + "\n", "cyan");
             } else {
                 line = center(prefix);
                 window.appendText(line + "\n", "default");
@@ -101,14 +71,14 @@ public class MenuScreen {
         }
         
         // Moldura inferior em vermelho
-        printlnRed(border);
+        window.appendText(border + "\n", "error");
         window.appendText("\n", "default");
         
         // Instruções
         String instrucoes1 = "Use ↑/↓ ou 1-6 para escolher";
         String instrucoes2 = "Pressione ENTER para confirmar";
-        printlnStyled(center(instrucoes1), "cyan");
-        printlnStyled(center(instrucoes2), "cyan");
+        window.appendText(center(instrucoes1) + "\n", "cyan");
+        window.appendText(center(instrucoes2) + "\n", "cyan");
         
         window.setWaitingForInput(true);
     }
