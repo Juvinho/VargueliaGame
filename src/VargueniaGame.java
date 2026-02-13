@@ -1,9 +1,5 @@
-import game.GameWindow;
-import game.GameEngine;
-import game.MenuScreen;
+import game.*;
 import core.GameState;
-import managers.RetroSoundGenerator;
-import managers.RetroMusicGenerator;
 import managers.MusicManager;
 
 public class VargueniaGame {
@@ -11,12 +7,13 @@ public class VargueniaGame {
     private static GameState gameState;
     private static GameEngine gameEngine;
     private static MenuScreen menuScreen;
-    private static ApplicationState appState = ApplicationState.BOOT;
-    private static boolean audioEnabled = true;
+    private static PasswordScreen passwordScreen;
+    private static LogsScreen logsScreen;
+    private static OptionsScreen optionsScreen;
+    private static CreditsScreen creditsScreen;
     
-    private enum ApplicationState {
-        BOOT, TITLE, MENU, GAME, PASSWORD
-    }
+    private static UiState currentUiState = UiState.TITLE_SCREEN;
+    private static boolean audioEnabled = true;
     
     public static void main(String[] args) {
         // Criar janela
@@ -30,15 +27,8 @@ public class VargueniaGame {
             // Mostrar tela de título
             showTitleScreen();
             
-            // Criar estado e menu
-            gameState = new GameState();
-            menuScreen = new MenuScreen(window);
-            
-            // Trocar para tela de menu
-            appState = ApplicationState.MENU;
-            window.setColorScheme(GameWindow.ColorScheme.OS_TERMINAL);
-            menuScreen.display();
-            window.setInputHandler(createMenuHandler());
+            // Ir para menu principal
+            goToMainMenu();
             
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -50,7 +40,7 @@ public class VargueniaGame {
      */
     private static void showTitleScreen() throws InterruptedException {
         window.clearText();
-        appState = ApplicationState.TITLE;
+        currentUiState = UiState.TITLE_SCREEN;
         
         // Linha de border com caracteres especiais DOS
         String borderLine = "════════════════════════════════════════════════════════════════";
@@ -84,7 +74,7 @@ public class VargueniaGame {
     private static void showBootScreenMSDOS() throws InterruptedException {
         window.setColorScheme(GameWindow.ColorScheme.OS_TERMINAL);
         window.clearText();
-        appState = ApplicationState.BOOT;
+        currentUiState = UiState.TITLE_SCREEN;
         
         // Efeito de boot do sistema
         if (audioEnabled) {
@@ -178,40 +168,42 @@ public class VargueniaGame {
         }
     }
     
-    private static GameWindow.InputHandler createMenuHandler() {
-        // Iniciar música de menu ao entrar no handler
-        MusicManager.getInstance().startTheme(MusicManager.MusicTheme.MENU);
+    /**
+     * Vai para o menu principal
+     */
+    private static void goToMainMenu() {
+        currentUiState = UiState.MAIN_MENU;
+        gameState = new GameState();
+        menuScreen = new MenuScreen(window);
+        passwordScreen = new PasswordScreen(window);
+        logsScreen = new LogsScreen(window);
+        optionsScreen = new OptionsScreen(window);
+        creditsScreen = new CreditsScreen(window);
         
+        window.setColorScheme(GameWindow.ColorScheme.OS_TERMINAL);
+        menuScreen.display();
+        window.setInputHandler(createMainMenuHandler());
+        
+        // Iniciar música de menu
+        MusicManager.getInstance().startTheme(MusicManager.MusicTheme.MENU);
+    }
+    
+    /**
+     * Handler para o menu principal
+     */
+    private static GameWindow.InputHandler createMainMenuHandler() {
         return new GameWindow.InputHandler() {
             @Override
             public void onEnter() {
-                if (appState != ApplicationState.MENU) return;
+                if (currentUiState != UiState.MAIN_MENU) return;
                 
                 String selected = menuScreen.handleEnter();
-                
-                if (selected.equals("NOVO JOGO")) {
-                    MusicManager.getInstance().playSoundConfirm();
-                    startNewGame();
-                } else if (selected.equals("CONTINUAR COM PASSWORD")) {
-                    MusicManager.getInstance().playSoundConfirm();
-                    showPasswordScreen();
-                } else if (selected.equals("ÁUDIO: LIGADO")) {
-                    audioEnabled = false;
-                    MusicManager.getInstance().setAudioEnabled(false);
-                    menuScreen.updateAudioOption(false);
-                } else if (selected.equals("ÁUDIO: DESLIGADO")) {
-                    audioEnabled = true;
-                    MusicManager.getInstance().setAudioEnabled(true);
-                    menuScreen.updateAudioOption(true);
-                    MusicManager.getInstance().playSoundConfirm();
-                } else if (selected.equals("SAIR")) {
-                    System.exit(0);
-                }
+                handleMainMenuSelection(selected);
             }
             
             @Override
             public void onChoice(String key) {
-                if (appState != ApplicationState.MENU) return;
+                if (currentUiState != UiState.MAIN_MENU) return;
                 
                 try {
                     String selected = menuScreen.handleNumberSelect(Integer.parseInt(key));
@@ -225,7 +217,7 @@ public class VargueniaGame {
             
             @Override
             public void onArrowUp() {
-                if (appState != ApplicationState.MENU) return;
+                if (currentUiState != UiState.MAIN_MENU) return;
                 menuScreen.handleUpArrow();
                 if (audioEnabled) {
                     MusicManager.getInstance().playSoundKeyPress();
@@ -234,7 +226,7 @@ public class VargueniaGame {
             
             @Override
             public void onArrowDown() {
-                if (appState != ApplicationState.MENU) return;
+                if (currentUiState != UiState.MAIN_MENU) return;
                 menuScreen.handleDownArrow();
                 if (audioEnabled) {
                     MusicManager.getInstance().playSoundKeyPress();
@@ -243,22 +235,46 @@ public class VargueniaGame {
         };
     }
     
-    private static void startNewGame() {
-        // Parar música do menu
-        MusicManager.getInstance().stopTheme();
-        
-        // Tocar som de confirmação e iniciar música de exploração
+    /**
+     * Processa seleção do menu principal
+     */
+    private static void handleMainMenuSelection(String selected) {
         if (audioEnabled) {
             MusicManager.getInstance().playSoundConfirm();
         }
         
-        // Iniciar jogo
-        appState = ApplicationState.GAME;
+        switch (selected) {
+            case "NOVO JOGO":
+                startNewGame();
+                break;
+            case "CONTINUAR (PASSWORD)":
+                showPasswordScreen();
+                break;
+            case "ARQUIVOS DA VARGUËN":
+                showLogsScreen();
+                break;
+            case "OPÇÕES":
+                showOptionsScreen();
+                break;
+            case "CRÉDITOS":
+                showCreditsScreen();
+                break;
+            case "SAIR":
+                System.exit(0);
+                break;
+        }
+    }
+    
+    /**
+     * Inicia um novo jogo
+     */
+    private static void startNewGame() {
+        MusicManager.getInstance().stopTheme();
+        
+        currentUiState = UiState.GAME;
         gameEngine = new GameEngine(window, gameState);
         window.setEngine(gameEngine);
-        window.setInputHandler(null); // Game engine vai lidar com input
         
-        // Iniciar tema de exploração para o jogo
         if (audioEnabled) {
             MusicManager.getInstance().startTheme(MusicManager.MusicTheme.EXPLORATION);
         }
@@ -266,43 +282,49 @@ public class VargueniaGame {
         gameEngine.showCurrentScene();
     }
     
+    /**
+     * Tela de password
+     */
     private static void showPasswordScreen() {
-        // Tocar som de confirmação
-        if (audioEnabled) {
-            MusicManager.getInstance().playSoundConfirm();
-        }
-        
-        appState = ApplicationState.PASSWORD;
-        
-        window.clearText();
-        window.appendText("\n");
-        window.appendText("═════════════════════════════════════════════════════════════════════\n");
-        window.appendText("                    CONTINUAR MISSÃO\n");
-        window.appendText("═════════════════════════════════════════════════════════════════════\n\n");
-        window.appendText("Digite seu código de acesso (PASSWORD):\n\n");
-        window.appendText("> ");
+        currentUiState = UiState.MENU_PASSWORD;
+        passwordScreen.clear();
+        passwordScreen.display();
         
         window.setInputHandler(new GameWindow.InputHandler() {
-            private StringBuilder password = new StringBuilder();
-            
             @Override
             public void onEnter() {
-                if (password.toString().isEmpty()) {
-                    return;
+                if (currentUiState != UiState.MENU_PASSWORD) return;
+                
+                String pwd = passwordScreen.getPassword();
+                if (passwordScreen.validateAndDecode(pwd)) {
+                    try {
+                        Thread.sleep(1000);
+                        // TODO: Restaurar estado do password (futura implementação)
+                        goToMainMenu();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    try {
+                        Thread.sleep(800);
+                        passwordScreen.clear();
+                        passwordScreen.display();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
-                
-                // Tentar restaurar estado
-                gameState.restoreFromPassword(password.toString());
-                
-                // Voltar ao menu
-                appState = ApplicationState.MENU;
-                menuScreen.display();
-                window.setInputHandler(createMenuHandler());
             }
             
             @Override
             public void onChoice(String key) {
-                // Ignorar números durante entrada de password
+                if (currentUiState != UiState.MENU_PASSWORD) return;
+                
+                if (key.length() == 1 && Character.isLetterOrDigit(key.charAt(0))) {
+                    passwordScreen.addCharacter(key.charAt(0));
+                    if (audioEnabled) {
+                        MusicManager.getInstance().playSoundKeyPress();
+                    }
+                }
             }
             
             @Override
@@ -313,8 +335,154 @@ public class VargueniaGame {
         });
     }
     
-    public static ApplicationState getAppState() {
-        return appState;
+    /**
+     * Tela de logs/arquivos
+     */
+    private static void showLogsScreen() {
+        currentUiState = UiState.MENU_LOGS;
+        logsScreen.display();
+        
+        window.setInputHandler(new GameWindow.InputHandler() {
+            private boolean readingLog = false;
+            
+            @Override
+            public void onEnter() {
+                if (currentUiState != UiState.MENU_LOGS) return;
+                
+                if (!readingLog) {
+                    logsScreen.readSelectedLog();
+                    readingLog = true;
+                } else {
+                    logsScreen.display();
+                    readingLog = false;
+                }
+                
+                if (audioEnabled) {
+                    MusicManager.getInstance().playSoundConfirm();
+                }
+            }
+            
+            @Override
+            public void onChoice(String key) {
+                if (currentUiState != UiState.MENU_LOGS || readingLog) return;
+                
+                try {
+                    int num = Integer.parseInt(key);
+                    if (num >= 1 && num <= 4) {
+                        if (audioEnabled) {
+                            MusicManager.getInstance().playSoundKeyPress();
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    // Ignorar
+                }
+            }
+            
+            @Override
+            public void onArrowUp() {
+                if (currentUiState != UiState.MENU_LOGS || readingLog) return;
+                logsScreen.handleUpArrow();
+                if (audioEnabled) {
+                    MusicManager.getInstance().playSoundKeyPress();
+                }
+            }
+            
+            @Override
+            public void onArrowDown() {
+                if (currentUiState != UiState.MENU_LOGS || readingLog) return;
+                logsScreen.handleDownArrow();
+                if (audioEnabled) {
+                    MusicManager.getInstance().playSoundKeyPress();
+                }
+            }
+        });
+    }
+    
+    /**
+     * Tela de opções
+     */
+    private static void showOptionsScreen() {
+        currentUiState = UiState.MENU_OPTIONS;
+        optionsScreen.display();
+        
+        window.setInputHandler(new GameWindow.InputHandler() {
+            @Override
+            public void onEnter() {
+                if (currentUiState != UiState.MENU_OPTIONS) return;
+                if (audioEnabled) {
+                    MusicManager.getInstance().playSoundConfirm();
+                }
+                goToMainMenu();
+            }
+            
+            @Override
+            public void onChoice(String key) {}
+            
+            @Override
+            public void onArrowUp() {
+                if (currentUiState != UiState.MENU_OPTIONS) return;
+                optionsScreen.handleUpArrow();
+                if (audioEnabled) {
+                    MusicManager.getInstance().playSoundKeyPress();
+                }
+            }
+            
+            @Override
+            public void onArrowDown() {
+                if (currentUiState != UiState.MENU_OPTIONS) return;
+                optionsScreen.handleDownArrow();
+                if (audioEnabled) {
+                    MusicManager.getInstance().playSoundKeyPress();
+                }
+            }
+        });
+        
+        // Também permitir esquerda/direita para ajustar valores
+        // TODO: Expandir InputHandler para suportar onLeftArrow() / onRightArrow()
+    }
+    
+    /**
+     * Tela de créditos
+     */
+    private static void showCreditsScreen() {
+        currentUiState = UiState.MENU_CREDITS;
+        creditsScreen.display();
+        
+        window.setInputHandler(new GameWindow.InputHandler() {
+            @Override
+            public void onEnter() {
+                if (currentUiState != UiState.MENU_CREDITS) return;
+                if (audioEnabled) {
+                    MusicManager.getInstance().playSoundConfirm();
+                }
+                goToMainMenu();
+            }
+            
+            @Override
+            public void onChoice(String key) {
+                if (currentUiState != UiState.MENU_CREDITS) return;
+                if (audioEnabled) {
+                    MusicManager.getInstance().playSoundConfirm();
+                }
+                goToMainMenu();
+            }
+            
+            @Override
+            public void onArrowUp() {
+                if (currentUiState != UiState.MENU_CREDITS) return;
+                creditsScreen.scrollUp();
+            }
+            
+            @Override
+            public void onArrowDown() {
+                if (currentUiState != UiState.MENU_CREDITS) return;
+                creditsScreen.scrollDown();
+            }
+        });
+    }
+    
+    public static UiState getCurrentUiState() {
+        return currentUiState;
     }
     
     public static boolean isAudioEnabled() {
