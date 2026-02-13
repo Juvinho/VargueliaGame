@@ -15,7 +15,7 @@ public class VargueniaGame {
     private static boolean audioEnabled = true;
     
     private enum ApplicationState {
-        BOOT, MENU, GAME, PASSWORD
+        BOOT, TITLE, MENU, GAME, PASSWORD
     }
     
     public static void main(String[] args) {
@@ -26,6 +26,9 @@ public class VargueniaGame {
         try {
             // Mostrar tela de boot estilo MS-DOS 1986
             showBootScreenMSDOS();
+            
+            // Mostrar tela de título
+            showTitleScreen();
             
             // Criar estado e menu
             gameState = new GameState();
@@ -40,6 +43,42 @@ public class VargueniaGame {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * Tela de título com "Varguelia" em vermelho
+     */
+    private static void showTitleScreen() throws InterruptedException {
+        window.clearText();
+        appState = ApplicationState.TITLE;
+        
+        // Linha de border com caracteres especiais DOS
+        String borderLine = "════════════════════════════════════════════════════════════════";
+        String emptyLine = "║                                                                ║";
+        
+        // Espaço vazio inicial
+        window.appendText("\n\n\n", "default");
+        
+        // Linha superior
+        window.appendText("         " + borderLine + "\n", "default");
+        window.appendText("         " + emptyLine + "\n", "default");
+        
+        // Linha com título - "Varguelia" em vermelho
+        window.appendText("         ║               ", "default");
+        window.appendText("Varguelia", "error");  // Vermelho
+        window.appendText(" - Ella é Demais        ║\n", "default");
+        
+        window.appendText("         " + emptyLine + "\n", "default");
+        
+        // Linha inferior
+        window.appendText("         " + borderLine + "\n", "default");
+        
+        // Espaço e instrução
+        window.appendText("\n\n", "default");
+        window.appendText("              Pressione ENTER para continuar\n", "yellow");
+        
+        // Aguardar por um tempo antes de voltar ao fluxo normal
+        Thread.sleep(500);
     }
     
     private static void showBootScreenMSDOS() throws InterruptedException {
