@@ -1,12 +1,16 @@
 package game;
 
-import java.awt.*;
-
 public class MenuScreen {
     private GameWindow window;
     private int selectedOption = 0;
-    private String[] options = {"NOVO JOGO", "CONTINUAR COM PASSWORD", "ÁUDIO: LIGADO", "SAIR"};
-    private boolean waitingForSelection = true;
+    private String[] options = {
+        "NOVO JOGO",
+        "CONTINUAR (PASSWORD)",
+        "ARQUIVOS DA VARGUËN",
+        "OPÇÕES",
+        "CRÉDITOS",
+        "SAIR"
+    };
     
     public MenuScreen(GameWindow window) {
         this.window = window;
@@ -15,49 +19,49 @@ public class MenuScreen {
     public void display() {
         window.clearText();
         
-        // Cabeçalho
-        window.appendText("\n\n\n", "default");
-        window.appendText("┌───────────────────────────────────────────────────────────────────┐\n", "default");
-        window.appendText("│                                                                   │\n", "default");
-        window.appendText("│                   ", "default");
-        window.appendText("FUNDAÇÃO VARGUÉLIA", "cyan");
-        window.appendText("                            │\n", "default");
-        window.appendText("│                                                                   │\n", "default");
-        window.appendText("│                      ", "default");
-        window.appendText("ELLA É DEMAIS", "yellow");
-        window.appendText("                          │\n", "default");
-        window.appendText("│                                                                   │\n", "default");
-        window.appendText("└───────────────────────────────────────────────────────────────────┘\n", "default");
-        
-        window.appendText("\n", "default");
-        window.appendText("═══════════════════════════════════════════════════════════════════\n", "default");
+        // Espaço inicial
         window.appendText("\n\n", "default");
         
-        // Opções
+        // Moldura superior com título
+        window.appendText("════════════════════════════════════════════════════════════════\n", "default");
+        window.appendText("║                                                              ║\n", "default");
+        window.appendText("║  ", "default");
+        window.appendText("Varguelia", "error");  // Vermelho
+        window.appendText(" - Ella é Demais                               ║\n", "default");
+        window.appendText("║                                                              ║\n", "default");
+        window.appendText("════════════════════════════════════════════════════════════════\n\n", "default");
+        
+        // Subtítulo
+        window.appendText("         MENU PRINCIPAL\n\n", "yellow");
+        
+        // Opções de menu
         for (int i = 0; i < options.length; i++) {
+            String prefix = (i + 1) + ". ";
+            
             if (i == selectedOption) {
-                window.appendText("                    ", "default");
+                window.appendText("         ", "default");
                 window.appendText("►", "cyan");
                 window.appendText(" ");
+                window.appendText(prefix, "cyan");
                 window.appendText(options[i], "cyan");
                 window.appendText(" ", "default");
                 window.appendText("◄\n", "cyan");
             } else {
-                window.appendText("                       " + options[i] + "\n", "default");
+                window.appendText("           ");
+                window.appendText(prefix);
+                window.appendText(options[i] + "\n");
             }
             window.appendText("\n", "default");
         }
         
-        window.appendText("\n", "default");
-        window.appendText("═══════════════════════════════════════════════════════════════════\n", "default");
-        window.appendText("\n", "default");
+        window.appendText("════════════════════════════════════════════════════════════════\n\n", "default");
         window.appendText("Use ", "default");
-        window.appendText("SETAS", "cyan");
-        window.appendText(" para navegar | ", "default");
+        window.appendText("↑/↓", "cyan");
+        window.appendText(" ou ", "default");
+        window.appendText("1-6", "cyan");
+        window.appendText(" para escolher | ", "default");
         window.appendText("ENTER", "cyan");
-        window.appendText(" para selecionar\n", "default");
-        window.appendText("ou digite ", "default");
-        window.appendText("1, 2, 3, 4\n", "cyan");
+        window.appendText(" para confirmar\n", "default");
         
         window.setWaitingForInput(true);
     }
@@ -87,10 +91,5 @@ public class MenuScreen {
     
     public int getSelectedOption() {
         return selectedOption;
-    }
-    
-    public void updateAudioOption(boolean enabled) {
-        options[2] = enabled ? "ÁUDIO: LIGADO" : "ÁUDIO: DESLIGADO";
-        display();
     }
 }
